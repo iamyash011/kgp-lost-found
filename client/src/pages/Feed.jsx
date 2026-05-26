@@ -335,12 +335,12 @@ export default function Feed() {
   const fetchItems = async () => {
     setLoading(true);
     try {
-      // Fetch all items from api
       const data = await api.getItems('ALL');
       setItems(data);
     } catch (error) {
+      // Silently handle — backend may not be available yet
       console.error('Error fetching items:', error);
-      triggerToast('Failed to fetch recent reports.', 'error');
+      setItems([]);
     } finally {
       setLoading(false);
     }

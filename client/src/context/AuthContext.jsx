@@ -6,6 +6,8 @@ const AuthContext = createContext(null);
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const ADMIN_EMAIL = 'kgp.lost.found@gmail.com';
+  const isAdmin = user?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
 
   useEffect(() => {
     // Check for user in localStorage on initial load
@@ -46,7 +48,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, loginMock, logout, loading, setUser }}>
+    <AuthContext.Provider value={{ user, login, loginMock, logout, loading, setUser, isAdmin }}>
       {!loading && children}
     </AuthContext.Provider>
   );

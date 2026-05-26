@@ -96,5 +96,23 @@ export const api = {
     });
     if (!res.ok) throw new Error('Failed to update notification');
     return res.json();
-  }
+  },
+
+  // --- Admin ---
+  adminFetch: async (path, options = {}) => {
+    const adminEmail = 'kgp.lost.found@gmail.com';
+    const res = await fetch(`${API_URL}/api/admin${path}`, {
+      ...options,
+      headers: {
+        'x-admin-email': adminEmail,
+        'Content-Type': 'application/json',
+        ...(options.headers || {}),
+      },
+    });
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.error || 'Admin request failed');
+    }
+    return res.json();
+  },
 };

@@ -3,13 +3,19 @@ import Navbar from './components/Navbar';
 import Feed from './pages/Feed';
 import ReportItem from './pages/ReportItem';
 import Login from './pages/Login';
+import AdminDashboard from './pages/AdminDashboard';
 import { useAuth } from './context/AuthContext';
 
 function ProtectedRoute({ children }) {
   const { user } = useAuth();
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
+  if (!user) return <Navigate to="/login" replace />;
+  return children;
+}
+
+function AdminRoute({ children }) {
+  const { user, isAdmin } = useAuth();
+  if (!user) return <Navigate to="/login" replace />;
+  if (!isAdmin) return <Navigate to="/" replace />;
   return children;
 }
 
@@ -28,6 +34,14 @@ function App() {
                 <ReportItem />
               </ProtectedRoute>
             } 
+          />
+          <Route
+            path="/admin"
+            element={
+              <AdminRoute>
+                <AdminDashboard />
+              </AdminRoute>
+            }
           />
         </Routes>
       </main>

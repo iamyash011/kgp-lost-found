@@ -6,6 +6,7 @@ import fs from 'fs';
 import authRoutes from './routes/auth';
 import itemRoutes from './routes/items';
 import notificationRoutes from './routes/notifications';
+import adminRoutes from './routes/admin';
 
 dotenv.config();
 
@@ -31,6 +32,7 @@ app.get('/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/items', itemRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Global error handler
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {

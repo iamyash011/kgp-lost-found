@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useSearchParams, useNavigate, useLocation } from 'react-router-dom';
-import { Bell, Search, Menu, PlusCircle, X, MessageSquare, Sparkles, Check, MessageCircle } from 'lucide-react';
+import { Bell, Search, Menu, PlusCircle, X, MessageSquare, Sparkles, Check, MessageCircle, Shield } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 
 export default function Navbar() {
-  const { user, logout } = useAuth();
+  const { user, logout, isAdmin } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -138,6 +138,16 @@ export default function Navbar() {
                 </button>
               )}
             </div>
+
+            {isAdmin && (
+              <Link
+                to="/admin"
+                className="flex items-center gap-1.5 text-xs font-bold text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 px-4 py-2 rounded-full transition-colors cursor-pointer"
+              >
+                <Shield className="w-3.5 h-3.5" />
+                Admin
+              </Link>
+            )}
 
             <Link
               to="/report"

@@ -60,8 +60,13 @@ router.post('/google', async (req: Request, res: Response) => {
   }
 });
 
-// POST /api/auth/mock-login - Sign in with a mock profile for local development
+// POST /api/auth/mock-login - Sign in with a mock profile for local development ONLY
 router.post('/mock-login', async (req: Request, res: Response) => {
+  // Hard-block this endpoint in production
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(404).json({ error: 'Not found' });
+  }
+
   const { name, email, whatsappNumber } = req.body;
 
   if (!email) {

@@ -9,7 +9,8 @@ export default function Login() {
   const navigate = useNavigate();
   const [error, setError] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
-  const [loginMethod, setLoginMethod] = useState('demo'); // 'google' or 'demo' default to demo for easy local review
+  const isDev = !import.meta.env.PROD;
+  const [loginMethod, setLoginMethod] = useState(isDev ? 'demo' : 'google');
 
   // Demo user states
   const [demoName, setDemoName] = useState('Rahul Verma');
@@ -68,19 +69,21 @@ export default function Login() {
           <p className="text-slate-400 text-sm mt-1">Lost & Found Hub for IIT Kharagpur</p>
         </div>
 
-        {/* Tab selection */}
+        {/* Tab selection — Developer Demo only shown in local dev */}
         <div className="flex bg-slate-900/60 p-1 rounded-xl mb-6 border border-slate-700/40">
-          <button
-            type="button"
-            onClick={() => { setLoginMethod('demo'); setError(''); }}
-            className={`flex-1 py-2.5 rounded-lg text-xs font-semibold tracking-wider uppercase transition-all flex items-center justify-center gap-1.5 ${
-              loginMethod === 'demo'
-                ? 'bg-blue-600 text-white shadow-md'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            Developer Demo
-          </button>
+          {isDev && (
+            <button
+              type="button"
+              onClick={() => { setLoginMethod('demo'); setError(''); }}
+              className={`flex-1 py-2.5 rounded-lg text-xs font-semibold tracking-wider uppercase transition-all flex items-center justify-center gap-1.5 ${
+                loginMethod === 'demo'
+                  ? 'bg-blue-600 text-white shadow-md'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              Developer Demo
+            </button>
+          )}
           <button
             type="button"
             onClick={() => { setLoginMethod('google'); setError(''); }}

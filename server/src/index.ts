@@ -10,17 +10,12 @@ import adminRoutes from './routes/admin';
 
 dotenv.config();
 
-// Create uploads directory if it does not exist
-const uploadsDir = path.join(__dirname, '../uploads');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir);
-}
+// Uploads are now handled via Cloudinary, no local filesystem needed
 
 const app = express();
 
 app.use(cors({ origin: ['http://localhost:5173', 'http://localhost:5174'], credentials: true }));
 app.use(express.json());
-app.use('/uploads', express.static(uploadsDir));
 
 
 // Health check

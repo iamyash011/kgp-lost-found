@@ -1,0 +1,63 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id              String   @id @default(uuid())
+  googleId        String   @unique
+  email           String   @unique
+  name            String
+  whatsappNumber  String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  items           Item[]
+}
+
+enum ItemType {
+  LOST
+  FOUND
+}
+
+enum ItemStatus {
+  ACTIVE
+  RESOLVED
+}
+
+model Item {
+  id               String     @id @default(uuid())
+  userId           String
+  type             ItemType
+  title            String
+  description      String
+  location         String
+  identifyingMarks String?
+  imageUrl         String?
+  status           ItemStatus @default(ACTIVE)
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  user             User       @relation(fields: [userId], references: [id])
+  lostMatches      Match[]    @relation("LostMatches")
+  foundMatches     Match[]    @relation("FoundMatches")
+}
+
+enum MatchStatus {
+  PENDING
+  NOTIFIED
+}
+
+model Match {
+  id           String      @id @default(uuid())
+  lostItemId   String
+  foundItemId  String
+  matchScore   Float
+  status       MatchStatus @default(PENDING)
+  createdAt    DateTime    @default(now())
+
+  lostItem     Item        @relation("LostMatches", fields: [lostItemId], references: [id])
+  foundItem    Item        @relation("FoundMatches", fields: [foundItemId], references: [id])
+}

@@ -1,19 +1,34 @@
 import { Router, Request, Response } from 'express';
 import { OAuth2Client } from 'google-auth-library';
+import jwt from 'jsonwebtoken';
 import prisma from '../lib/prisma';
+import { authenticateUser } from '../middleware/auth';
 
 const router = Router();
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-for-dev';
+
+// Helper to generate JWT
+const generateToken = (id: string, email: string) => {
+  return jwt.sign({ id, email }, JWT_SECRET, { expiresIn: '7d' });
+};
 
 // POST /api/auth/google - Verify Google ID token and sign in/up user
 router.post('/google', async (req: Request, res: Response) => {
-  const { idToken, whatsappNumber, userInfo } = req.body;
+  const { idToken, whatsappNumber, accessToken } = req.body;
 
   try {
     let email: string, googleId: string, name: string | undefined;
 
-    if (userInfo) {
-      // Path 1: useGoogleLogin (implicit flow) — sends userInfo from /oauth2/v3/userinfo
+    if (accessToken) {
+      // Path 1: useGoogleLogin (implicit flow) — backend securely fetches user info using access token
+      const response = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!response.ok) {
+        return res.status(401).json({ error: 'Invalid Google access token' });
+      }
+      const userInfo: any = await response.json();
       email = userInfo.email;
       googleId = userInfo.sub;
       name = userInfo.name;
@@ -34,10 +49,10 @@ router.post('/google', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Missing credentials' });
     }
 
-    // CRITICAL: Only allow IIT KGP emails
-    if (!email.endsWith('.iitkgp.ac.in')) {
+    // CRITICAL: Only allow IIT KGP student emails or the admin email
+    if (!email.endsWith('@kgpian.iitkgp.ac.in') && email !== 'kgp.lost.found@gmail.com') {
       return res.status(403).json({
-        error: 'Access denied. Only @*.iitkgp.ac.in email addresses are allowed.',
+        error: 'Access denied. Only @kgpian.iitkgp.ac.in email addresses are allowed.',
       });
     }
 
@@ -69,7 +84,8 @@ router.post('/google', async (req: Request, res: Response) => {
       }
     }
 
-    res.json({ user });
+    const token = generateToken(user.id, user.email);
+    res.json({ user, token });
   } catch (error) {
     console.error('Auth error:', error);
     res.status(500).json({ error: 'Authentication failed' });
@@ -89,10 +105,10 @@ router.post('/mock-login', async (req: Request, res: Response) => {
     return res.status(400).json({ error: 'Missing email address' });
   }
 
-  // Only allow IIT KGP emails
-  if (!email.endsWith('.iitkgp.ac.in')) {
+  // Only allow IIT KGP student emails or the admin email
+  if (!email.endsWith('@kgpian.iitkgp.ac.in') && email !== 'kgp.lost.found@gmail.com') {
     return res.status(403).json({
-      error: 'Access denied. Only @*.iitkgp.ac.in email addresses are allowed.',
+      error: 'Access denied. Only @kgpian.iitkgp.ac.in email addresses are allowed.',
     });
   }
 
@@ -124,7 +140,8 @@ router.post('/mock-login', async (req: Request, res: Response) => {
       }
     }
 
-    res.json({ user });
+    const token = generateToken(user.id, user.email);
+    res.json({ user, token });
   } catch (error) {
     console.error('Mock auth error:', error);
     res.status(500).json({ error: 'Mock authentication failed' });

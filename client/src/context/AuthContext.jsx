@@ -20,9 +20,10 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (idToken, whatsappNumber, userInfo = null) => {
     try {
-      const { user: userData } = await api.loginWithGoogle(idToken, whatsappNumber, userInfo);
+      const { user: userData, token } = await api.loginWithGoogle(idToken, whatsappNumber, userInfo);
       setUser(userData);
       localStorage.setItem('kgp_user', JSON.stringify(userData));
+      if (token) localStorage.setItem('kgp_token', token);
       return userData;
     } catch (error) {
       console.error("Login Error:", error);
@@ -32,9 +33,10 @@ export const AuthProvider = ({ children }) => {
 
   const loginMock = async (name, email, whatsappNumber) => {
     try {
-      const { user: userData } = await api.loginWithMock(name, email, whatsappNumber);
+      const { user: userData, token } = await api.loginWithMock(name, email, whatsappNumber);
       setUser(userData);
       localStorage.setItem('kgp_user', JSON.stringify(userData));
+      if (token) localStorage.setItem('kgp_token', token);
       return userData;
     } catch (error) {
       console.error("Mock Login Error:", error);
@@ -45,6 +47,7 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     setUser(null);
     localStorage.removeItem('kgp_user');
+    localStorage.removeItem('kgp_token');
   };
 
   return (

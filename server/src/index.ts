@@ -1,5 +1,7 @@
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import authRoutes from './routes/auth';
 import itemRoutes from './routes/items';
@@ -11,6 +13,27 @@ dotenv.config();
 // Uploads are now handled via Cloudinary, no local filesystem needed
 
 const app = express();
+
+// Security headers
+app.use(helmet());
+
+// Global Rate limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 150, // limit each IP to 150 requests per windowMs
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use(limiter);
+
+// Auth routes get a stricter rate limit
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 30, // limit each IP to 30 requests per windowMs for auth
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use('/api/auth', authLimiter);
 
 // Allow localhost in dev, and all Vercel/production origins
 const allowedOrigins = process.env.NODE_ENV === 'production'

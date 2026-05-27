@@ -47,14 +47,9 @@ export default function Login() {
       try {
         setSigningIn(true);
         setError('');
-        // Exchange access token for user info, then verify on backend
-        const userInfoRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-          headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
-        });
-        const userInfo = await userInfoRes.json();
 
         // Send to our backend for verification and upsert
-        await login(null, whatsapp || null, userInfo);
+        await login(null, whatsapp || null, tokenResponse.access_token);
         navigate('/');
       } catch (err) {
         // If backend says this is a new user without WhatsApp, switch to Create Account tab
@@ -62,7 +57,7 @@ export default function Login() {
           setTab('signup');
           setError('👋 Looks like you\'re new here! Please enter your WhatsApp number and sign up below.');
         } else {
-          setError(err.message || 'Sign-in failed. Use your @*.iitkgp.ac.in email.');
+          setError(err.message || 'Sign-in failed. Use your @kgpian.iitkgp.ac.in email.');
         }
         setSigningIn(false);
       }
@@ -81,8 +76,8 @@ export default function Login() {
       setError('Please fill in all fields.');
       return;
     }
-    if (!demoEmail.endsWith('.iitkgp.ac.in')) {
-      setError('Email must end with .iitkgp.ac.in');
+    if (!demoEmail.endsWith('@kgpian.iitkgp.ac.in') && demoEmail !== 'kgp.lost.found@gmail.com') {
+      setError('Email must be @kgpian.iitkgp.ac.in or admin email');
       return;
     }
     if (whatsapp.length < 10) {
@@ -169,7 +164,7 @@ export default function Login() {
               disabled={signingIn}
             />
             <p className="text-xxs text-center text-slate-500">
-              Only <strong className="text-slate-400">@*.iitkgp.ac.in</strong> emails are allowed.
+              Only <strong className="text-slate-400">@kgpian.iitkgp.ac.in</strong> emails are allowed.
             </p>
           </div>
         )}
@@ -207,7 +202,7 @@ export default function Login() {
               </div>
             )}
             <p className="text-xxs text-center text-slate-500">
-              Only <strong className="text-slate-400">@*.iitkgp.ac.in</strong> emails are allowed.
+              Only <strong className="text-slate-400">@kgpian.iitkgp.ac.in</strong> emails are allowed.
             </p>
           </div>
         )}

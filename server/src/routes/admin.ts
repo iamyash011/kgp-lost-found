@@ -1,11 +1,11 @@
 import { Router, Request, Response } from 'express';
 import prisma from '../lib/prisma';
-import { adminGuard } from '../middleware/adminGuard';
+import { requireAdmin } from '../middleware/auth';
 
 const router = Router();
 
-// All routes protected by admin guard
-router.use(adminGuard);
+// All routes protected by requireAdmin middleware
+router.use(requireAdmin);
 
 // GET /api/admin/stats - Platform analytics
 router.get('/stats', async (req: Request, res: Response) => {

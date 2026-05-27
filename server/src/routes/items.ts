@@ -1,11 +1,12 @@
 import { Router, Request, Response } from 'express';
 import prisma from '../lib/prisma';
 import { upload } from '../lib/upload';
+import { authenticateUser, optionalAuth } from '../middleware/auth';
 
 const router = Router();
 
 // GET /api/items - Get all active items (with optional type filter)
-router.get('/', async (req: Request, res: Response) => {
+router.get('/', optionalAuth, async (req: Request, res: Response) => {
   const { type } = req.query;
   try {
     const items = await prisma.item.findMany({
@@ -20,6 +21,14 @@ router.get('/', async (req: Request, res: Response) => {
       },
       orderBy: { createdAt: 'desc' },
     });
+
+    // If not authenticated, strip whatsappNumber
+    if (!req.user) {
+      items.forEach((item) => {
+        if (item.user) (item.user as any).whatsappNumber = null;
+      });
+    }
+
     res.json(items);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch items' });
@@ -27,7 +36,7 @@ router.get('/', async (req: Request, res: Response) => {
 });
 
 // GET /api/items/:id - Get a single item by ID
-router.get('/:id', async (req: Request, res: Response) => {
+router.get('/:id', optionalAuth, async (req: Request, res: Response) => {
   try {
     const item = await prisma.item.findUnique({
       where: { id: req.params['id'] as string },
@@ -36,6 +45,12 @@ router.get('/:id', async (req: Request, res: Response) => {
       },
     });
     if (!item) return res.status(404).json({ error: 'Item not found' });
+
+    // If not authenticated, strip whatsappNumber
+    if (!req.user && item.user) {
+      (item.user as any).whatsappNumber = null;
+    }
+
     res.json(item);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch item' });
@@ -43,16 +58,17 @@ router.get('/:id', async (req: Request, res: Response) => {
 });
 
 // POST /api/items - Create a new lost/found report with up to 3 images
-router.post('/', (req: Request, res: Response, next) => {
+router.post('/', authenticateUser, (req: Request, res: Response, next) => {
   upload.array('images', 3)(req, res, async (err) => {
     if (err) {
       return res.status(400).json({ error: err.message });
     }
 
-    // Note: file.size is 0 for Cloudinary uploads (stream-based), size limit enforced on frontend
-    const { userId, type, title, description, location, identifyingMarks, imageUrl: manualUrl } = req.body;
+    // Use req.user.id securely, ignore userId from body
+    const userId = req.user!.id;
+    const { type, title, description, location, identifyingMarks, imageUrl: manualUrl } = req.body;
 
-    if (!userId || !type || !title || !description || !location) {
+    if (!type || !title || !description || !location) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
@@ -94,10 +110,17 @@ router.post('/', (req: Request, res: Response, next) => {
 });
 
 // PATCH /api/items/:id/resolve - Mark an item as resolved
-router.patch('/:id/resolve', async (req: Request, res: Response) => {
+router.patch('/:id/resolve', authenticateUser, async (req: Request, res: Response) => {
   try {
+    const item = await prisma.item.findUnique({ where: { id: req.params['id'] as string } });
+    if (!item) return res.status(404).json({ error: 'Item not found' });
+
+    if (item.userId !== req.user!.id && !req.user!.isAdmin) {
+      return res.status(403).json({ error: 'Forbidden: You can only resolve your own items' });
+    }
+
     const updated = await prisma.item.update({
-      where: { id: req.params['id'] as string },
+      where: { id: item.id },
       data: { status: 'RESOLVED' },
     });
     res.json(updated);
@@ -107,11 +130,16 @@ router.patch('/:id/resolve', async (req: Request, res: Response) => {
 });
 
 // DELETE /api/items/:id - Delete an item
-router.delete('/:id', async (req: Request, res: Response) => {
+router.delete('/:id', authenticateUser, async (req: Request, res: Response) => {
   try {
-    // Proactively delete any associated files first
     const item = await prisma.item.findUnique({ where: { id: req.params['id'] as string } });
-    if (item && item.imageUrl) {
+    if (!item) return res.status(404).json({ error: 'Item not found' });
+
+    if (item.userId !== req.user!.id && !req.user!.isAdmin) {
+      return res.status(403).json({ error: 'Forbidden: You can only delete your own items' });
+    }
+
+    if (item.imageUrl) {
       try {
         const imagePaths: string[] = JSON.parse(item.imageUrl);
         if (Array.isArray(imagePaths)) {
@@ -130,7 +158,7 @@ router.delete('/:id', async (req: Request, res: Response) => {
       }
     }
 
-    await prisma.item.delete({ where: { id: req.params['id'] as string } });
+    await prisma.item.delete({ where: { id: item.id } });
     res.json({ message: 'Item deleted successfully' });
   } catch (error) {
     res.status(500).json({ error: 'Failed to delete item' });
@@ -138,12 +166,16 @@ router.delete('/:id', async (req: Request, res: Response) => {
 });
 
 // POST /api/items/:id/purge-images - Delete uploaded files on server disk to save space
-router.post('/:id/purge-images', async (req: Request, res: Response) => {
+router.post('/:id/purge-images', authenticateUser, async (req: Request, res: Response) => {
   const itemId = req.params['id'] as string;
   try {
     const item = await prisma.item.findUnique({ where: { id: itemId } });
     if (!item) {
       return res.status(404).json({ error: 'Item not found' });
+    }
+
+    if (item.userId !== req.user!.id && !req.user!.isAdmin) {
+      return res.status(403).json({ error: 'Forbidden: You can only purge your own items' });
     }
 
     if (item.imageUrl) {

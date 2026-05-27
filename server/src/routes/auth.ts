@@ -50,7 +50,8 @@ router.post('/google', async (req: Request, res: Response) => {
     }
 
     // CRITICAL: Only allow IIT KGP student emails or the admin email
-    if (!email.endsWith('@kgpian.iitkgp.ac.in') && email !== 'kgp.lost.found@gmail.com') {
+    const emailLower = email.toLowerCase();
+    if (!emailLower.endsWith('@kgpian.iitkgp.ac.in') && emailLower !== 'kgp.lost.found@gmail.com') {
       return res.status(403).json({
         error: 'Access denied. Only @kgpian.iitkgp.ac.in email addresses are allowed.',
       });
@@ -106,7 +107,8 @@ router.post('/mock-login', async (req: Request, res: Response) => {
   }
 
   // Only allow IIT KGP student emails or the admin email
-  if (!email.endsWith('@kgpian.iitkgp.ac.in') && email !== 'kgp.lost.found@gmail.com') {
+  const emailLower = email.toLowerCase();
+  if (!emailLower.endsWith('@kgpian.iitkgp.ac.in') && emailLower !== 'kgp.lost.found@gmail.com') {
     return res.status(403).json({
       error: 'Access denied. Only @kgpian.iitkgp.ac.in email addresses are allowed.',
     });

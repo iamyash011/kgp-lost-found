@@ -113,36 +113,36 @@ export default function Login() {
 
   const switchTab = (t) => { setTab(t); setError(''); setWhatsapp(''); };
 
-  const inputClass = "w-full bg-slate-900/50 border border-slate-700/80 rounded-xl pl-11 pr-4 py-3 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all text-sm font-medium";
+  const inputClass = "w-full bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700/80 rounded-xl pl-11 pr-4 py-3 text-slate-900 dark:text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all text-sm font-medium";
 
   return (
     <div className="min-h-[85vh] flex items-center justify-center px-4 relative overflow-hidden">
       <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
 
-      <div className="max-w-md w-full bg-slate-800/40 border border-slate-700/50 p-8 rounded-3xl shadow-2xl shadow-black/40 backdrop-blur-xl relative z-10">
+      <div className="max-w-md w-full bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-200 dark:border-slate-700/50 p-8 rounded-3xl shadow-2xl shadow-black/40 backdrop-blur-xl relative z-10">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex p-3 bg-gradient-to-tr from-blue-600/20 to-emerald-600/20 rounded-2xl border border-blue-500/30 mb-4 shadow-lg">
+          <div className="inline-flex p-3 bg-gradient-to-tr from-blue-600/20 to-emerald-600/20 rounded-3xl border border-blue-500/30 mb-4 shadow-lg">
             <Sparkles className="w-8 h-8 text-blue-400 animate-pulse" />
           </div>
-          <h1 className="text-3xl font-extrabold text-white tracking-tight">KGP Find</h1>
-          <p className="text-slate-400 text-sm mt-1">Lost &amp; Found Hub for IIT Kharagpur</p>
+          <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight font-heading">KGP Find</h1>
+          <p className="text-slate-600 dark:text-slate-400 dark:text-slate-400 text-sm mt-1">Lost &amp; Found Hub for IIT Kharagpur</p>
         </div>
 
         {/* Tab Bar */}
-        <div className="flex bg-slate-900/60 p-1 rounded-xl mb-6 border border-slate-700/40 gap-1">
+        <div className="flex bg-white dark:bg-slate-900/60 p-1 rounded-xl mb-6 border border-slate-200 dark:border-slate-700/40 gap-1">
           <button type="button" onClick={() => switchTab('signin')}
-            className={`flex-1 py-2.5 rounded-lg text-xs font-semibold tracking-wide transition-all flex items-center justify-center gap-1.5 cursor-pointer ${tab === 'signin' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'}`}>
+            className={`flex-1 py-2.5 rounded-lg text-xs font-semibold tracking-wide transition-all flex items-center justify-center gap-1.5 cursor-pointer ${tab === 'signin' ? 'bg-blue-600 text-slate-900 dark:text-white shadow-md' : 'text-slate-600 dark:text-slate-400 dark:text-slate-400 hover:text-slate-800 dark:text-slate-200'}`}>
             <LogIn className="w-3.5 h-3.5" /> Sign In
           </button>
           <button type="button" onClick={() => switchTab('signup')}
-            className={`flex-1 py-2.5 rounded-lg text-xs font-semibold tracking-wide transition-all flex items-center justify-center gap-1.5 cursor-pointer ${tab === 'signup' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'}`}>
+            className={`flex-1 py-2.5 rounded-lg text-xs font-semibold tracking-wide transition-all flex items-center justify-center gap-1.5 cursor-pointer ${tab === 'signup' ? 'bg-emerald-600 text-slate-900 dark:text-white shadow-md' : 'text-slate-600 dark:text-slate-400 dark:text-slate-400 hover:text-slate-800 dark:text-slate-200'}`}>
             <UserPlus className="w-3.5 h-3.5" /> Create Account
           </button>
           {isDev && (
             <button type="button" onClick={() => switchTab('demo')}
-              className={`flex-1 py-2.5 rounded-lg text-xs font-semibold tracking-wide transition-all flex items-center justify-center gap-1.5 cursor-pointer ${tab === 'demo' ? 'bg-slate-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-300'}`}>
+              className={`flex-1 py-2.5 rounded-lg text-xs font-semibold tracking-wide transition-all flex items-center justify-center gap-1.5 cursor-pointer ${tab === 'demo' ? 'bg-slate-600 text-slate-900 dark:text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:text-slate-700 dark:text-slate-300'}`}>
               Dev
             </button>
           )}
@@ -150,7 +150,7 @@ export default function Login() {
 
         {/* Error Banner */}
         {error && (
-          <div className="mb-5 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-start gap-3">
+          <div className="mb-5 p-4 bg-red-500/10 border border-red-500/20 rounded-3xl flex items-start gap-3">
             <AlertCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
             <p className="text-xs text-red-200 leading-relaxed">{error}</p>
           </div>
@@ -159,17 +159,17 @@ export default function Login() {
         {/* SIGN IN TAB */}
         {tab === 'signin' && (
           <div className="space-y-5">
-            <div className="p-4 bg-blue-500/5 border border-blue-500/10 rounded-2xl">
-              <p className="text-xs text-slate-300 font-semibold mb-0.5">Welcome back!</p>
-              <p className="text-xxs text-slate-500 leading-relaxed">Sign in with your IIT KGP Google account to access your reports and notifications.</p>
+            <div className="p-4 bg-blue-500/5 border border-blue-500/10 rounded-3xl">
+              <p className="text-xs text-slate-700 dark:text-slate-300 font-semibold mb-0.5">Welcome back!</p>
+              <p className="text-xxs text-slate-600 dark:text-slate-400 leading-relaxed">Sign in with your IIT KGP Google account to access your reports and notifications.</p>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 dark:text-slate-400 mb-2">
                 WhatsApp <span className="text-slate-600 font-normal normal-case">(optional — updates your contact)</span>
               </label>
               <div className="relative">
-                <MessageSquare className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                <MessageSquare className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 dark:text-slate-400" />
                 <input type="tel" placeholder="e.g. 9876543210" value={whatsapp}
                   onChange={(e) => handleWhatsappChange(e.target.value)}
                   className={inputClass} />
@@ -188,8 +188,8 @@ export default function Login() {
               text={signingIn ? 'Signing in…' : 'Continue with Google'}
               disabled={signingIn}
             />
-            <p className="text-xxs text-center text-slate-500">
-              Only <strong className="text-slate-400">@kgpian.iitkgp.ac.in</strong> emails are allowed.
+            <p className="text-xxs text-center text-slate-600 dark:text-slate-400">
+              Only <strong className="text-slate-600 dark:text-slate-400 dark:text-slate-400">@kgpian.iitkgp.ac.in</strong> emails are allowed.
             </p>
           </div>
         )}
@@ -197,22 +197,22 @@ export default function Login() {
         {/* CREATE ACCOUNT TAB */}
         {tab === 'signup' && (
           <div className="space-y-5">
-            <div className="p-4 bg-emerald-500/5 border border-emerald-500/10 rounded-2xl">
-              <p className="text-xs text-slate-300 font-semibold mb-0.5">New here? Welcome!</p>
-              <p className="text-xxs text-slate-500 leading-relaxed">Create your account with your IIT KGP Google account. WhatsApp is required so others can contact you about matches.</p>
+            <div className="p-4 bg-emerald-500/5 border border-emerald-500/10 rounded-3xl">
+              <p className="text-xs text-slate-700 dark:text-slate-300 font-semibold mb-0.5">New here? Welcome!</p>
+              <p className="text-xxs text-slate-600 dark:text-slate-400 leading-relaxed">Create your account with your IIT KGP Google account. WhatsApp is required so others can contact you about matches.</p>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 dark:text-slate-400 mb-2">
                 WhatsApp Number <span className="text-red-400">*</span>
               </label>
               <div className="relative">
-                <MessageSquare className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                <MessageSquare className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 dark:text-slate-400" />
                 <input type="tel" placeholder="e.g. 9876543210" value={whatsapp}
                   onChange={(e) => handleWhatsappChange(e.target.value)}
                   className={inputClass.replace('focus:ring-blue-500/50', 'focus:ring-emerald-500/50')} />
               </div>
-              <p className="text-xxs text-slate-500 mt-1.5">Required so matches can reach you directly.</p>
+              <p className="text-xxs text-slate-600 dark:text-slate-400 mt-1.5">Required so matches can reach you directly.</p>
             </div>
 
             {isValidWhatsapp(whatsapp) ? (
@@ -222,12 +222,12 @@ export default function Login() {
                 disabled={signingIn}
               />
             ) : (
-              <div className="w-full text-xs font-semibold text-slate-500 bg-slate-900/40 px-6 py-3 rounded-xl border border-slate-800 text-center">
+              <div className="w-full text-xs font-semibold text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-900/40 px-6 py-3 rounded-xl border border-slate-200 dark:border-slate-800 text-center">
                 Enter your 10-digit WhatsApp number first
               </div>
             )}
-            <p className="text-xxs text-center text-slate-500">
-              Only <strong className="text-slate-400">@kgpian.iitkgp.ac.in</strong> emails are allowed.
+            <p className="text-xxs text-center text-slate-600 dark:text-slate-400">
+              Only <strong className="text-slate-600 dark:text-slate-400 dark:text-slate-400">@kgpian.iitkgp.ac.in</strong> emails are allowed.
             </p>
           </div>
         )}
@@ -236,32 +236,32 @@ export default function Login() {
         {isDev && tab === 'demo' && (
           <form onSubmit={handleDemoSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Full Name</label>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 dark:text-slate-400 mb-1.5">Full Name</label>
               <div className="relative">
-                <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 dark:text-slate-400" />
                 <input type="text" required placeholder="Rahul Verma" value={demoName} onChange={(e) => setDemoName(e.target.value)} className={inputClass} />
               </div>
             </div>
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Mock IIT KGP Email</label>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 dark:text-slate-400 mb-1.5">Mock IIT KGP Email</label>
               <div className="relative">
-                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 dark:text-slate-400" />
                 <input type="email" required placeholder="rahul.verma@iitkgp.ac.in" value={demoEmail} onChange={(e) => setDemoEmail(e.target.value)} className={inputClass} />
               </div>
             </div>
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">WhatsApp Number</label>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 dark:text-slate-400 mb-1.5">WhatsApp Number</label>
               <div className="relative">
-                <MessageSquare className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                <MessageSquare className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 dark:text-slate-400" />
                 <input type="tel" required placeholder="9876543210" value={whatsapp} onChange={(e) => handleWhatsappChange(e.target.value)} className={inputClass} />
               </div>
             </div>
-            <button type="submit" className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-emerald-600 hover:from-blue-500 hover:to-emerald-500 text-white rounded-xl text-sm font-semibold shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer">
+            <button type="submit" className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-emerald-600 hover:from-blue-500 hover:to-emerald-500 text-slate-900 dark:text-white rounded-xl text-sm font-semibold shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer">
               Access Demo Account
             </button>
             <div className="flex gap-2 items-center p-3 bg-blue-500/5 border border-blue-500/10 rounded-xl">
               <ShieldAlert className="w-4 h-4 text-blue-400 shrink-0" />
-              <span className="text-xxs text-slate-400">Dev-only bypass. Hidden in production.</span>
+              <span className="text-xxs text-slate-600 dark:text-slate-400 dark:text-slate-400">Dev-only bypass. Hidden in production.</span>
             </div>
           </form>
         )}

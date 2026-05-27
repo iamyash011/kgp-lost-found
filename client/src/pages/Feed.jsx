@@ -76,12 +76,12 @@ function ItemModal({ item, onClose, onActionSuccess }) {
     >
       {/* Modal panel */}
       <div
-        className="relative w-full max-w-lg bg-slate-900 border border-slate-700/80 rounded-3xl overflow-hidden shadow-2xl shadow-black/70 animate-in"
+        className="relative w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 rounded-3xl overflow-hidden shadow-2xl shadow-black/70 animate-in"
         onClick={(e) => e.stopPropagation()}
         style={{ animation: 'modalIn 0.2s ease-out' }}
       >
         {/* Image header */}
-        <div className="relative h-56 overflow-hidden bg-slate-950">
+        <div className="relative h-56 overflow-hidden bg-slate-100 dark:bg-slate-950">
           {images.length > 0 ? (
             <img 
               src={images[activeImgIdx].startsWith('http') ? images[activeImgIdx] : `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${images[activeImgIdx]}`} 
@@ -89,7 +89,7 @@ function ItemModal({ item, onClose, onActionSuccess }) {
               className="w-full h-full object-cover transition-all duration-300" 
             />
           ) : (
-            <div className="w-full h-full flex flex-col items-center justify-center bg-slate-900 border-b border-slate-800/80 text-slate-500">
+            <div className="w-full h-full flex flex-col items-center justify-center bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800/80 text-slate-600 dark:text-slate-400">
               <ImageIcon className="w-12 h-12 mb-2 text-slate-700" />
               <span className="text-xs font-semibold">No Images Uploaded</span>
             </div>
@@ -104,7 +104,7 @@ function ItemModal({ item, onClose, onActionSuccess }) {
                   e.stopPropagation();
                   setActiveImgIdx((prev) => (prev === 0 ? images.length - 1 : prev - 1));
                 }}
-                className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-slate-900/60 backdrop-blur-sm border border-slate-750 flex items-center justify-center text-white hover:bg-slate-900 transition-all cursor-pointer z-10 font-bold"
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white dark:bg-slate-900/60 backdrop-blur-sm border border-slate-750 flex items-center justify-center text-slate-900 dark:text-white hover:bg-white dark:bg-slate-900 transition-all cursor-pointer z-10 font-bold"
               >
                 &larr;
               </button>
@@ -114,12 +114,12 @@ function ItemModal({ item, onClose, onActionSuccess }) {
                   e.stopPropagation();
                   setActiveImgIdx((prev) => (prev === images.length - 1 ? 0 : prev + 1));
                 }}
-                className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-slate-900/60 backdrop-blur-sm border border-slate-750 flex items-center justify-center text-white hover:bg-slate-900 transition-all cursor-pointer z-10 font-bold"
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white dark:bg-slate-900/60 backdrop-blur-sm border border-slate-750 flex items-center justify-center text-slate-900 dark:text-white hover:bg-white dark:bg-slate-900 transition-all cursor-pointer z-10 font-bold"
               >
                 &rarr;
               </button>
 
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 z-10 bg-slate-950/40 backdrop-blur-sm px-2.5 py-1 rounded-full border border-slate-800/60">
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 z-10 bg-slate-100 dark:bg-slate-950/40 backdrop-blur-sm px-2.5 py-1 rounded-full border border-slate-200 dark:border-slate-800/60">
                 {images.map((_, idx) => (
                   <button
                     key={idx}
@@ -137,7 +137,7 @@ function ItemModal({ item, onClose, onActionSuccess }) {
           {/* Close button */}
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 w-8 h-8 bg-slate-900/80 backdrop-blur-sm border border-slate-700/60 rounded-full flex items-center justify-center text-slate-300 hover:text-white transition-colors cursor-pointer"
+            className="absolute top-4 right-4 w-8 h-8 bg-white dark:bg-slate-900/80 backdrop-blur-sm border border-slate-200 dark:border-slate-700/60 rounded-full flex items-center justify-center text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:text-white transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -146,8 +146,8 @@ function ItemModal({ item, onClose, onActionSuccess }) {
           <div className="absolute top-4 left-4">
             <span className={`px-3 py-1 rounded-full text-xs font-extrabold tracking-wide shadow-lg border ${
               isLost
-                ? 'bg-red-500/20 text-red-300 border-red-500/30'
-                : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                ? 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300 border-none shadow-sm'
+                : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300 border-none shadow-sm'
             }`}>
               {item.type}
             </span>
@@ -164,7 +164,7 @@ function ItemModal({ item, onClose, onActionSuccess }) {
 
           {/* Title over image */}
           <div className="absolute bottom-4 left-5 right-5">
-            <h2 className="text-2xl font-bold text-white leading-tight">{item.title}</h2>
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white leading-tight">{item.title}</h2>
           </div>
         </div>
 
@@ -172,41 +172,41 @@ function ItemModal({ item, onClose, onActionSuccess }) {
         <div className="p-6 space-y-5">
           {/* Description */}
           <div>
-            <p className="text-slate-300 text-sm leading-relaxed">{item.description}</p>
+            <p className="text-slate-700 dark:text-slate-300 text-sm leading-relaxed">{item.description}</p>
           </div>
 
           {/* Details grid */}
           <div className="grid grid-cols-1 gap-3">
-            <div className="flex items-start gap-3 bg-slate-800/40 border border-slate-750/50 rounded-xl p-3">
+            <div className="flex items-start gap-3 bg-slate-50 dark:bg-slate-800/40 border border-slate-750/50 rounded-xl p-3">
               <MapPin className="w-4 h-4 text-blue-400 mt-0.5 shrink-0" />
               <div>
-                <p className="text-xxs text-slate-500 mb-0.5">{isLost ? 'Expected near' : 'Found at'}</p>
-                <p className="text-xs text-slate-200 font-semibold">{item.location}</p>
+                <p className="text-xxs text-slate-600 dark:text-slate-400 mb-0.5">{isLost ? 'Expected near' : 'Found at'}</p>
+                <p className="text-xs text-slate-800 dark:text-slate-200 font-semibold">{item.location}</p>
               </div>
             </div>
 
             {item.identifyingMarks && (
-              <div className="flex items-start gap-3 bg-slate-800/40 border border-slate-750/50 rounded-xl p-3">
+              <div className="flex items-start gap-3 bg-slate-50 dark:bg-slate-800/40 border border-slate-750/50 rounded-xl p-3">
                 <Tag className="w-4 h-4 text-purple-400 mt-0.5 shrink-0" />
                 <div>
-                  <p className="text-xxs text-slate-500 mb-0.5">Identifying Marks</p>
-                  <p className="text-xs text-slate-200 font-semibold">{item.identifyingMarks}</p>
+                  <p className="text-xxs text-slate-600 dark:text-slate-400 mb-0.5">Identifying Marks</p>
+                  <p className="text-xs text-slate-800 dark:text-slate-200 font-semibold">{item.identifyingMarks}</p>
                 </div>
               </div>
             )}
 
-            <div className="flex items-start gap-3 bg-slate-800/40 border border-slate-750/50 rounded-xl p-3">
-              <Clock className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
+            <div className="flex items-start gap-3 bg-slate-50 dark:bg-slate-800/40 border border-slate-750/50 rounded-xl p-3">
+              <Clock className="w-4 h-4 text-slate-600 dark:text-slate-400 dark:text-slate-400 mt-0.5 shrink-0" />
               <div>
-                <p className="text-xxs text-slate-500 mb-0.5">Posted</p>
-                <p className="text-xs text-slate-200 font-semibold">{timeAgo(item.createdAt)} by {isOwner ? 'You' : contactName}</p>
+                <p className="text-xxs text-slate-600 dark:text-slate-400 mb-0.5">Posted</p>
+                <p className="text-xs text-slate-800 dark:text-slate-200 font-semibold">{timeAgo(item.createdAt)} by {isOwner ? 'You' : contactName}</p>
               </div>
             </div>
           </div>
 
           {/* Admin Actions */}
           {isAdmin && !isOwner && (
-            <div className="bg-red-950/20 border border-red-900/50 rounded-2xl p-4 space-y-3 mb-4">
+            <div className="bg-red-950/20 border border-red-900/50 rounded-3xl p-4 space-y-3 mb-4">
               <div className="flex items-center gap-2 text-xs text-red-400 font-bold">
                 <AlertCircle className="w-4 h-4" />
                 <span>Admin Controls</span>
@@ -232,8 +232,8 @@ function ItemModal({ item, onClose, onActionSuccess }) {
 
           {/* Info note / Actions */}
           {isOwner ? (
-            <div className="bg-slate-800/20 border border-slate-700/50 rounded-2xl p-4 space-y-3">
-              <div className="flex items-center gap-2 text-xs text-slate-300 font-medium">
+            <div className="bg-white dark:bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-200 dark:border-slate-700/50 rounded-3xl p-4 space-y-3">
+              <div className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 font-medium">
                 <Info className="w-4 h-4 text-blue-400" />
                 <span>You reported this item. What would you like to do?</span>
               </div>
@@ -250,7 +250,7 @@ function ItemModal({ item, onClose, onActionSuccess }) {
                           onActionSuccess('Failed to resolve item.', 'error');
                         }
                       }}
-                      className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                      className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                     >
                       <CheckCircle2 className="w-4 h-4" /> Mark Resolved
                     </button>
@@ -303,7 +303,7 @@ function ItemModal({ item, onClose, onActionSuccess }) {
                   : 'bg-emerald-500/10 border-emerald-500/20'
               }`}>
                 <AlertCircle className={`w-4 h-4 mt-0.5 shrink-0 ${isLost ? 'text-red-400' : 'text-emerald-400'}`} />
-                <p className="text-xs text-slate-300 leading-relaxed">
+                <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
                   {isLost
                     ? 'If you have found this item, reach out to the owner directly via WhatsApp to coordinate return.'
                     : 'If this is your item, contact the finder via WhatsApp to claim it.'}
@@ -315,7 +315,7 @@ function ItemModal({ item, onClose, onActionSuccess }) {
                 href={`https://wa.me/${whatsappNumber}`}
                 target="_blank"
                 rel="noreferrer"
-                className="flex items-center justify-center gap-2 w-full py-3.5 rounded-2xl bg-green-600 hover:bg-green-500 text-white font-semibold text-sm transition-all shadow-lg shadow-green-900/35 cursor-pointer active:scale-[0.99]"
+                className="flex items-center justify-center gap-2 w-full py-3.5 rounded-3xl bg-green-600 hover:bg-green-700 text-white shadow-md font-semibold text-sm transition-all shadow-lg shadow-green-900/35 cursor-pointer active:scale-[0.99]"
               >
                 <MessageCircle className="w-5 h-5" />
                 Contact {contactName} on WhatsApp
@@ -376,7 +376,7 @@ export default function Feed() {
   // Filter items in frontend to support search, tags, and dynamic user reporting manager
   const filteredItems = items.filter((item) => {
     // 1. Filter by user reports tab vs public feed tabs
-    if (activeFilter === 'MY_REPORTS') {
+    if (false /* activeFilter removed */) {
       if (item.userId !== user?.id) return false;
     } else {
       // In public feed, only show active ones
@@ -417,7 +417,7 @@ export default function Feed() {
       {/* Toast Alert popup */}
       {toast && (
         <div className="fixed top-20 right-6 z-50 animate-bounce duration-500">
-          <div className={`flex items-center gap-3 px-5 py-4 border rounded-2xl shadow-2xl backdrop-blur-xl ${
+          <div className={`flex items-center gap-3 px-5 py-4 border rounded-3xl shadow-2xl backdrop-blur-xl ${
             toast.type === 'success' 
               ? 'bg-emerald-950/80 border-emerald-500/30 text-emerald-200' 
               : toast.type === 'error'
@@ -430,7 +430,7 @@ export default function Feed() {
               <Info className="w-5 h-5 text-blue-400 shrink-0" />
             )}
             <span className="text-xs font-semibold">{toast.message}</span>
-            <button onClick={() => setToast(null)} className="text-slate-400 hover:text-white ml-2">
+            <button onClick={() => setToast(null)} className="text-slate-600 dark:text-slate-400 dark:text-slate-400 hover:text-slate-900 dark:text-white ml-2">
               <X className="w-4 h-4" />
             </button>
           </div>
@@ -439,21 +439,21 @@ export default function Feed() {
 
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold text-white tracking-tight bg-gradient-to-r from-blue-100 to-slate-200 bg-clip-text">
+          <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-emerald-600 dark:from-blue-100 dark:to-slate-200 tracking-tight font-heading">
             Recent Activity
           </h1>
-          <p className="text-slate-400 mt-1 text-sm">Help your fellow KGPians find their lost belongings.</p>
+          <p className="text-slate-600 dark:text-slate-400 dark:text-slate-400 mt-1 text-sm">Help your fellow KGPians find their lost belongings.</p>
         </div>
 
-        <div className="flex bg-slate-800/40 p-1 rounded-xl backdrop-blur-sm border border-slate-700/40">
-          {['ALL', 'LOST', 'FOUND', ...(user ? ['MY_REPORTS'] : [])].map((f) => (
+        <div className="flex bg-slate-50 dark:bg-slate-800/40 p-1 rounded-xl backdrop-blur-sm border border-slate-200 dark:border-slate-700/40">
+          {['ALL', 'LOST', 'FOUND'].map((f) => (
             <button
               key={f}
               onClick={() => setActiveFilter(f)}
-              className={`px-5 py-2 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${
+              className={`px-5 py-2.5 rounded-xl text-xs font-semibold tracking-wide transition-all cursor-pointer ${
                 activeFilter === f
                   ? 'bg-blue-600 text-white shadow-md'
-                  : 'text-slate-400 hover:text-white'
+                  : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
               }`}
             >
               {f === 'ALL'
@@ -467,7 +467,7 @@ export default function Feed() {
       </div>
 
       {searchQuery && (
-        <div className="mb-6 flex items-center gap-2 text-xs font-medium text-slate-400 bg-blue-500/5 border border-blue-500/10 py-2.5 px-4 rounded-xl w-fit">
+        <div className="mb-6 flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-400 dark:text-slate-400 bg-blue-500/5 border border-blue-500/10 py-2.5 px-4 rounded-xl w-fit">
           <Search className="w-4 h-4 text-blue-400 shrink-0" />
           <span>Showing results matching "<span className="text-blue-300 font-bold">{searchQuery}</span>"</span>
           <button 
@@ -489,7 +489,7 @@ export default function Feed() {
       {loading ? (
         <div className="flex justify-center items-center h-64">
           <div className="relative w-12 h-12">
-            <div className="absolute inset-0 rounded-full border-4 border-slate-800" />
+            <div className="absolute inset-0 rounded-full border-4 border-slate-200 dark:border-slate-800" />
             <div className="absolute inset-0 rounded-full border-4 border-t-blue-500 border-r-transparent border-b-transparent border-l-transparent animate-spin" />
           </div>
         </div>
@@ -506,13 +506,13 @@ export default function Feed() {
               <div
                 key={item.id}
                 onClick={() => setSelectedItem(item)}
-                className="group flex flex-col bg-slate-800/20 border border-slate-700/50 rounded-2xl overflow-hidden hover:bg-slate-800/40 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-blue-500/5 cursor-pointer relative"
+                className="group flex flex-col bg-white dark:bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-200 dark:border-slate-700/50 rounded-3xl overflow-hidden hover:bg-slate-50 dark:bg-slate-800/40 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-blue-500/5 cursor-pointer relative"
               >
-                <div className="relative h-48 overflow-hidden bg-slate-900 border-b border-slate-800/50">
+                <div className="relative h-48 overflow-hidden bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800/50">
                   {displayImg ? (
                     <img src={displayImg} alt={item.title} className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-500" />
                   ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center bg-slate-800/30 text-slate-600 group-hover:text-slate-500 transition-colors">
+                    <div className="w-full h-full flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-800/30 text-slate-600 group-hover:text-slate-600 dark:text-slate-400 transition-colors">
                       <ImageIcon className="w-10 h-10 mb-2 opacity-40" strokeWidth={1.5} />
                       <span className="text-xs font-semibold tracking-wide opacity-40">No Image</span>
                     </div>
@@ -552,25 +552,25 @@ export default function Feed() {
                   <h3 className="text-md font-bold text-slate-100 line-clamp-1 group-hover:text-blue-400 transition-colors">
                     <HighlightText text={item.title} highlight={searchQuery} />
                   </h3>
-                  <p className="text-xs text-slate-400 mt-2.5 line-clamp-2 flex-grow leading-relaxed">
+                  <p className="text-xs text-slate-600 dark:text-slate-400 dark:text-slate-400 mt-2.5 line-clamp-2 flex-grow leading-relaxed">
                     <HighlightText text={item.description} highlight={searchQuery} />
                   </p>
 
-                  <div className="mt-4 pt-4 border-t border-slate-700/40 flex flex-col gap-2.5">
-                    <div className="flex items-center text-xxs text-slate-400 font-medium">
+                  <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700/40 flex flex-col gap-2.5">
+                    <div className="flex items-center text-xxs text-slate-600 dark:text-slate-400 dark:text-slate-400 font-medium">
                       <MapPin className="w-3.5 h-3.5 mr-1.5 text-blue-400 shrink-0" />
                       <span className="truncate">
                         <HighlightText text={item.location} highlight={searchQuery} />
                       </span>
                     </div>
-                    <div className="flex items-center text-xxs text-slate-500">
+                    <div className="flex items-center text-xxs text-slate-600 dark:text-slate-400">
                       <Clock className="w-3.5 h-3.5 mr-1.5" />
                       <span>{timeAgo(item.createdAt)}</span>
                     </div>
                   </div>
 
-                  <div className="mt-4 pt-3 border-t border-slate-700/20 flex items-center justify-between">
-                    <span className="text-xxs text-slate-500">
+                  <div className="mt-4 pt-3 border-t border-slate-200 dark:border-slate-700/20 flex items-center justify-between">
+                    <span className="text-xxs text-slate-600 dark:text-slate-400">
                       {isOwner ? 'Posted by You' : `By ${item.user?.name || 'Unknown'}`}
                     </span>
                     {!isOwner && (
@@ -590,10 +590,10 @@ export default function Feed() {
             );
           })}
           {filteredItems.length === 0 && (
-            <div className="col-span-full text-center py-16 text-slate-400 bg-slate-800/10 border border-slate-750/30 rounded-3xl p-8">
-              <AlertCircle className="w-8 h-8 text-slate-500 mx-auto mb-3" />
-              <p className="text-sm font-semibold text-slate-300">No reports found.</p>
-              <p className="text-xs text-slate-500 mt-1">Try resetting your filters or adjusting your search queries.</p>
+            <div className="col-span-full text-center py-16 text-slate-600 dark:text-slate-400 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/10 border border-slate-750/30 rounded-3xl p-8">
+              <AlertCircle className="w-8 h-8 text-slate-600 dark:text-slate-400 mx-auto mb-3" />
+              <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">No reports found.</p>
+              <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">Try resetting your filters or adjusting your search queries.</p>
             </div>
           )}
         </div>

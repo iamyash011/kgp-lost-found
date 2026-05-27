@@ -141,13 +141,13 @@ export default function ReportItem() {
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10 relative">
       <div className="absolute top-10 left-10 w-48 h-48 bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
 
-      <div className="bg-slate-800/40 border border-slate-700/50 rounded-3xl p-8 backdrop-blur-md shadow-2xl relative z-10">
+      <div className="bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-200 dark:border-slate-700/50 rounded-3xl p-8 backdrop-blur-md shadow-2xl relative z-10">
         <div className="flex justify-between items-start mb-6">
           <div>
-            <h1 className="text-3xl font-extrabold text-white tracking-tight bg-gradient-to-r from-blue-100 to-slate-200 bg-clip-text">
+            <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight font-heading bg-gradient-to-r from-blue-100 to-slate-200 bg-clip-text">
               Report an Item
             </h1>
-            <p className="text-slate-400 mt-1.5 text-sm">
+            <p className="text-slate-600 dark:text-slate-400 dark:text-slate-400 mt-1.5 text-sm">
               Provide as many details as possible to help active keyword matching.
             </p>
           </div>
@@ -157,24 +157,24 @@ export default function ReportItem() {
         </div>
 
         {error && (
-          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-start gap-3">
+          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-3xl flex items-start gap-3">
             <AlertTriangle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
             <p className="text-xs text-red-200 leading-normal font-semibold">{error}</p>
           </div>
         )}
         
-        <div className="flex bg-slate-900/60 p-1 rounded-xl mb-8 w-fit border border-slate-700/40">
+        <div className="flex bg-white dark:bg-slate-900/60 p-1 rounded-xl mb-8 w-fit border border-slate-200 dark:border-slate-700/40">
           <button 
             type="button"
             onClick={() => setType('LOST')}
-            className={`px-8 py-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${type === 'LOST' ? 'bg-red-500/25 text-red-400 shadow-sm' : 'text-slate-400 hover:text-white'}`}
+            className={`px-8 py-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${type === 'LOST' ? 'bg-red-500/25 text-red-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 dark:text-slate-400 hover:text-slate-900 dark:text-white'}`}
           >
             I Lost Something
           </button>
           <button 
             type="button"
             onClick={() => setType('FOUND')}
-            className={`px-8 py-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${type === 'FOUND' ? 'bg-emerald-500/25 text-emerald-400 shadow-sm' : 'text-slate-400 hover:text-white'}`}
+            className={`px-8 py-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${type === 'FOUND' ? 'bg-emerald-500/25 text-emerald-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 dark:text-slate-400 hover:text-slate-900 dark:text-white'}`}
           >
             I Found Something
           </button>
@@ -183,7 +183,7 @@ export default function ReportItem() {
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Custom multi-image drag & drop upload zone */}
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 dark:text-slate-400 mb-2">
               Upload Images (Max 3, up to 5MB combined)
             </label>
 
@@ -191,7 +191,7 @@ export default function ReportItem() {
               onDragOver={handleDragOver}
               onDrop={handleDrop}
               onClick={() => fileInputRef.current?.click()}
-              className="border-2 border-dashed border-slate-700 hover:border-blue-500/50 transition-all rounded-2xl p-8 flex flex-col items-center justify-center bg-slate-900/20 cursor-pointer group hover:bg-slate-900/40 relative overflow-hidden"
+              className="border-2 border-dashed border-slate-200 dark:border-slate-700 hover:border-blue-500/50 transition-all rounded-3xl p-8 flex flex-col items-center justify-center bg-white dark:bg-slate-900/20 cursor-pointer group hover:bg-white dark:bg-slate-900/40 relative overflow-hidden"
             >
               <input 
                 type="file"
@@ -205,8 +205,8 @@ export default function ReportItem() {
               <div className="w-12 h-12 bg-blue-500/10 rounded-full flex items-center justify-center mb-3 group-hover:scale-105 transition-transform border border-blue-500/15">
                 <UploadCloud className="w-6 h-6 text-blue-400" />
               </div>
-              <p className="text-slate-200 font-semibold text-xs mb-1">Click or drag images to upload</p>
-              <p className="text-slate-500 text-xxs leading-normal">
+              <p className="text-slate-800 dark:text-slate-200 font-semibold text-xs mb-1">Click or drag images to upload</p>
+              <p className="text-slate-600 dark:text-slate-400 text-xxs leading-normal">
                 JPEG, PNG, WEBP, or GIF. Maximum 3 images, up to 5MB combined.
               </p>
             </div>
@@ -214,20 +214,20 @@ export default function ReportItem() {
 
           {/* Thumbnail preview list */}
           {selectedFiles.length > 0 && (
-            <div className="grid grid-cols-3 gap-4 bg-slate-900/30 p-4 border border-slate-800 rounded-2xl">
+            <div className="grid grid-cols-3 gap-4 bg-white dark:bg-slate-900/30 p-4 border border-slate-200 dark:border-slate-800 rounded-3xl">
               {selectedFiles.map((item, idx) => (
-                <div key={idx} className="relative aspect-video rounded-xl overflow-hidden border border-slate-700 bg-slate-950 group/thumb shadow-md">
+                <div key={idx} className="relative aspect-video rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-950 group/thumb shadow-md">
                   <img src={item.previewUrl} alt={`preview-${idx}`} className="w-full h-full object-cover" />
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/thumb:opacity-100 transition-opacity flex items-center justify-center">
                     <button
                       type="button"
                       onClick={(e) => { e.stopPropagation(); removeFile(idx); }}
-                      className="p-1.5 bg-red-600 hover:bg-red-500 text-white rounded-full transition-colors cursor-pointer"
+                      className="p-1.5 bg-red-600 hover:bg-red-500 text-slate-900 dark:text-white rounded-full transition-colors cursor-pointer"
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>
                   </div>
-                  <div className="absolute bottom-2 left-2 bg-slate-900/80 backdrop-blur-sm border border-slate-700 px-2 py-0.5 rounded text-xxs text-slate-350 font-medium">
+                  <div className="absolute bottom-2 left-2 bg-white dark:bg-slate-900/80 backdrop-blur-sm border border-slate-200 dark:border-slate-700 px-2 py-0.5 rounded text-xxs text-slate-350 font-medium">
                     {(item.file.size / (1024 * 1024)).toFixed(1)} MB
                   </div>
                 </div>
@@ -237,7 +237,7 @@ export default function ReportItem() {
 
           <div className="space-y-4">
             <div className="relative">
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Item Title *</label>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 dark:text-slate-400 mb-1.5">Item Title *</label>
               <input 
                 required
                 type="text" 
@@ -250,11 +250,11 @@ export default function ReportItem() {
                 onFocus={() => setShowTitleSuggestions(true)}
                 onBlur={() => setTimeout(() => setShowTitleSuggestions(false), 200)}
                 placeholder="e.g. Milton Water Bottle, ID Card, etc..." 
-                className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-650 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-all text-xs font-medium relative z-20" 
+                className="w-full bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white placeholder-slate-650 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-all text-xs font-medium relative z-20" 
               />
 
               {showTitleSuggestions && titleSuggestions.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-slate-800 border border-slate-700 rounded-xl shadow-xl overflow-hidden z-30 animate-in fade-in slide-in-from-top-2 duration-150">
+                <div className="absolute top-full left-0 right-0 mt-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl overflow-hidden z-30 animate-in fade-in slide-in-from-top-2 duration-150">
                   <ul className="max-h-48 overflow-y-auto">
                     {titleSuggestions.map((itemTitle) => (
                       <li 
@@ -263,7 +263,7 @@ export default function ReportItem() {
                           setFormData(prev => ({ ...prev, title: itemTitle }));
                           setShowTitleSuggestions(false);
                         }}
-                        className="px-4 py-2.5 text-xs text-slate-200 hover:bg-slate-700 cursor-pointer font-medium transition-colors"
+                        className="px-4 py-2.5 text-xs text-slate-800 dark:text-slate-200 hover:bg-slate-700 cursor-pointer font-medium transition-colors"
                       >
                         {itemTitle}
                       </li>
@@ -274,7 +274,7 @@ export default function ReportItem() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Description *</label>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 dark:text-slate-400 mb-1.5">Description *</label>
               <textarea 
                 required
                 name="description"
@@ -282,13 +282,13 @@ export default function ReportItem() {
                 onChange={handleChange}
                 rows={4} 
                 placeholder="Describe the item in detail (e.g. scratch, sticker, exact look). Higher keyword detail enables better matching score!" 
-                className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-650 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-all text-xs font-medium resize-none leading-relaxed"
+                className="w-full bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white placeholder-slate-650 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-all text-xs font-medium resize-none leading-relaxed"
               ></textarea>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="relative">
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 dark:text-slate-400 mb-1.5">
                   {type === 'LOST' ? 'Expected Location *' : 'Found Location *'}
                 </label>
                 <input 
@@ -303,11 +303,11 @@ export default function ReportItem() {
                   onFocus={() => setShowLocSuggestions(true)}
                   onBlur={() => setTimeout(() => setShowLocSuggestions(false), 200)}
                   placeholder="e.g. Nalanda Classroom Complex" 
-                  className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-650 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-all text-xs font-medium relative z-20" 
+                  className="w-full bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white placeholder-slate-650 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-all text-xs font-medium relative z-20" 
                 />
                 
                 {showLocSuggestions && locationSuggestions.length > 0 && (
-                  <div className="absolute top-full left-0 right-0 mt-1 bg-slate-800 border border-slate-700 rounded-xl shadow-xl overflow-hidden z-30 animate-in fade-in slide-in-from-top-2 duration-150">
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl overflow-hidden z-30 animate-in fade-in slide-in-from-top-2 duration-150">
                     <ul className="max-h-48 overflow-y-auto">
                       {locationSuggestions.map((loc) => (
                         <li 
@@ -316,7 +316,7 @@ export default function ReportItem() {
                             setFormData(prev => ({ ...prev, location: loc }));
                             setShowLocSuggestions(false);
                           }}
-                          className="px-4 py-2.5 text-xs text-slate-200 hover:bg-slate-700 cursor-pointer font-medium transition-colors"
+                          className="px-4 py-2.5 text-xs text-slate-800 dark:text-slate-200 hover:bg-slate-700 cursor-pointer font-medium transition-colors"
                         >
                           {loc}
                         </li>
@@ -327,30 +327,30 @@ export default function ReportItem() {
               </div>
               
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Identifying Marks (Optional)</label>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 dark:text-slate-400 mb-1.5">Identifying Marks (Optional)</label>
                 <input 
                   type="text" 
                   name="identifyingMarks"
                   value={formData.identifyingMarks}
                   onChange={handleChange}
                   placeholder="e.g. Scratch on base, red tape on neck" 
-                  className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-650 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-all text-xs font-medium" 
+                  className="w-full bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white placeholder-slate-650 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-all text-xs font-medium" 
                 />
               </div>
             </div>
           </div>
 
-          <div className="bg-blue-500/5 border border-blue-500/10 rounded-2xl p-4 flex items-start gap-3 mt-8">
+          <div className="bg-blue-500/5 border border-blue-500/10 rounded-3xl p-4 flex items-start gap-3 mt-8">
             <CheckCircle2 className="w-5 h-5 text-blue-400 shrink-0 mt-0.5 animate-pulse" />
             <p className="text-xxs text-slate-350 leading-relaxed">
-              Your contact number <strong className="text-white">{user?.whatsappNumber || 'Not Set'}</strong> will be automatically linked to this report so matches can establish quick, immediate communication.
+              Your contact number <strong className="text-slate-900 dark:text-white">{user?.whatsappNumber || 'Not Set'}</strong> will be automatically linked to this report so matches can establish quick, immediate communication.
             </p>
           </div>
 
           <button 
             type="submit" 
             disabled={loading}
-            className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-emerald-600 hover:from-blue-500 hover:to-emerald-500 disabled:opacity-50 text-white font-bold text-sm py-3.5 rounded-xl shadow-lg active:scale-[0.99] transition-all cursor-pointer"
+            className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-emerald-600 hover:from-blue-500 hover:to-emerald-500 disabled:opacity-50 text-slate-900 dark:text-white font-bold text-sm py-3.5 rounded-xl shadow-lg active:scale-[0.99] transition-all cursor-pointer"
           >
             {loading && <Loader2 className="w-4.5 h-4.5 animate-spin" />}
             {loading ? 'Publishing Report...' : 'Submit Report'}

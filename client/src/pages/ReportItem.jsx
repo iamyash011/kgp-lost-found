@@ -5,6 +5,7 @@ import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
 import { LOCATION_SYNONYMS } from '../utils/locations';
+import { COMMON_ITEMS } from '../utils/items';
 
 export default function ReportItem() {
   const { user } = useAuth();
@@ -23,6 +24,12 @@ export default function ReportItem() {
   });
 
   const [showLocSuggestions, setShowLocSuggestions] = useState(false);
+  const [showTitleSuggestions, setShowTitleSuggestions] = useState(false);
+
+  // Compute title suggestions dynamically based on input
+  const titleSuggestions = formData.title.length >= 1 ?
+    COMMON_ITEMS.filter(item => item.toLowerCase().includes(formData.title.toLowerCase()))
+    : COMMON_ITEMS.slice(0, 50); // Show top 50 if empty
 
   // Compute location suggestions dynamically based on input
   const locationSuggestions = formData.location.length >= 1 ? 
@@ -229,17 +236,41 @@ export default function ReportItem() {
           )}
 
           <div className="space-y-4">
-            <div>
+            <div className="relative">
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Item Title *</label>
               <input 
                 required
                 type="text" 
                 name="title"
                 value={formData.title}
-                onChange={handleChange}
-                placeholder="e.g. Blue Milton Water Bottle" 
-                className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-650 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-all text-xs font-medium" 
+                onChange={(e) => {
+                  handleChange(e);
+                  setShowTitleSuggestions(true);
+                }}
+                onFocus={() => setShowTitleSuggestions(true)}
+                onBlur={() => setTimeout(() => setShowTitleSuggestions(false), 200)}
+                placeholder="e.g. Milton Water Bottle, ID Card, etc..." 
+                className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-650 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-all text-xs font-medium relative z-20" 
               />
+
+              {showTitleSuggestions && titleSuggestions.length > 0 && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-slate-800 border border-slate-700 rounded-xl shadow-xl overflow-hidden z-30 animate-in fade-in slide-in-from-top-2 duration-150">
+                  <ul className="max-h-48 overflow-y-auto">
+                    {titleSuggestions.map((itemTitle) => (
+                      <li 
+                        key={itemTitle}
+                        onClick={() => {
+                          setFormData(prev => ({ ...prev, title: itemTitle }));
+                          setShowTitleSuggestions(false);
+                        }}
+                        className="px-4 py-2.5 text-xs text-slate-200 hover:bg-slate-700 cursor-pointer font-medium transition-colors"
+                      >
+                        {itemTitle}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
 
             <div>

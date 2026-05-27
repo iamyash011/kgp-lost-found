@@ -14,7 +14,14 @@ declare module 'express-serve-static-core' {
 }
 
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-for-dev';
-const ADMIN_EMAIL = 'kgp.lost.found@gmail.com';
+const envAdminEmails = process.env.ADMIN_EMAILS || process.env.ADMIN_EMAIL;
+const ADMIN_EMAILS = envAdminEmails
+  ? envAdminEmails.split(',').map(e => e.trim().toLowerCase()) 
+  : ['kgp.lost.found@gmail.com'];
+
+const checkIsAdmin = (email: string) => {
+  return ADMIN_EMAILS.includes(email.toLowerCase());
+};
 
 export const authenticateUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -29,7 +36,7 @@ export const authenticateUser = async (req: Request, res: Response, next: NextFu
     req.user = {
       id: decoded.id,
       email: decoded.email,
-      isAdmin: decoded.email.toLowerCase() === ADMIN_EMAIL.toLowerCase(),
+      isAdmin: checkIsAdmin(decoded.email),
     };
 
     next();
@@ -47,7 +54,7 @@ export const optionalAuth = async (req: Request, res: Response, next: NextFuncti
       req.user = {
         id: decoded.id,
         email: decoded.email,
-        isAdmin: decoded.email.toLowerCase() === ADMIN_EMAIL.toLowerCase(),
+        isAdmin: checkIsAdmin(decoded.email),
       };
     }
   } catch (error) {

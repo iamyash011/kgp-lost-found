@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import prisma from '../lib/prisma';
 import { upload } from '../lib/upload';
 import { authenticateUser, optionalAuth } from '../middleware/auth';
+import { containsProfanity } from '../lib/moderation';
 
 const router = Router();
 
@@ -70,6 +71,10 @@ router.post('/', authenticateUser, (req: Request, res: Response, next) => {
 
     if (!type || !title || !description || !location) {
       return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    if (containsProfanity([title, description, location, identifyingMarks])) {
+      return res.status(400).json({ error: 'Your report contains inappropriate language and cannot be submitted.' });
     }
 
     try {

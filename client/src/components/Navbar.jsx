@@ -16,6 +16,7 @@ export default function Navbar() {
   const [showNotif, setShowNotif] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const notifRef = useRef(null);
 
@@ -284,12 +285,117 @@ export default function Navbar() {
                 {user.name.charAt(0).toUpperCase()}
               </div>
             )}
-            <button className="text-slate-300">
-              <Menu className="w-6 h-6" />
+            <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="text-slate-300 p-1">
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
           </div>
         </div>
       </div>
+
+      {/* Mobile Menu Dropdown */}
+      {mobileMenuOpen && (
+        <div className="md:hidden bg-slate-900 border-b border-slate-800">
+          <div className="px-4 pt-2 pb-4 space-y-4">
+            {/* Mobile Search */}
+            <div className="relative">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+              <input
+                type="text"
+                placeholder="Search items, locations..."
+                value={searchVal}
+                onChange={(e) => { handleSearchChange(e); }}
+                className="w-full bg-slate-800/50 text-xs text-slate-200 rounded-xl pl-10 pr-4 py-3 border border-slate-700/60 focus:outline-none focus:border-blue-500/60"
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              {isAdmin && (
+                <Link
+                  to="/admin"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-2 text-sm font-semibold text-amber-300 bg-amber-500/10 p-3 rounded-xl"
+                >
+                  <Shield className="w-4 h-4" /> Admin Dashboard
+                </Link>
+              )}
+              
+              <Link
+                to="/report"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-500 p-3 rounded-xl shadow-lg"
+              >
+                <PlusCircle className="w-4 h-4" /> Report Item
+              </Link>
+
+              {user ? (
+                <>
+                  <button
+                    onClick={() => { setShowNotif(!showNotif); }}
+                    className="flex items-center justify-between text-sm font-semibold text-slate-200 bg-slate-800/50 p-3 rounded-xl"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Bell className="w-4 h-4 text-slate-400" /> Notifications
+                    </div>
+                    {unreadCount > 0 && (
+                      <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full font-bold">
+                        {unreadCount}
+                      </span>
+                    )}
+                  </button>
+
+                  <button
+                    onClick={() => { logout(); setMobileMenuOpen(false); }}
+                    className="flex items-center gap-2 text-sm font-semibold text-red-400 bg-red-500/10 p-3 rounded-xl"
+                  >
+                    Sign Out
+                  </button>
+                </>
+              ) : (
+                <Link
+                  to="/login"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-2 text-sm font-semibold text-white bg-slate-800 p-3 rounded-xl"
+                >
+                  Sign In
+                </Link>
+              )}
+            </div>
+            
+            {/* Mobile Notifications Area */}
+            {user && showNotif && (
+              <div className="mt-2 bg-slate-950/50 rounded-xl border border-slate-800 overflow-hidden">
+                <div className="max-h-64 overflow-y-auto divide-y divide-slate-800/60">
+                  {notifications.map((match) => {
+                    const { myItem, matchedItem, whatsapp } = resolveMatchDetails(match);
+                    const isPending = match.status === 'PENDING';
+                    return (
+                      <div key={match.id} className={`p-3 ${isPending ? 'bg-blue-500/5' : ''}`}>
+                        <p className="text-xs text-slate-300 mb-2">
+                          Match for <strong className="text-slate-100">{myItem.title}</strong>
+                        </p>
+                        <div className="flex gap-2">
+                          <a href={`https://wa.me/${whatsapp}`} target="_blank" rel="noreferrer" className="flex-1 py-1.5 bg-green-600 text-white rounded-lg text-xs font-bold text-center">
+                            Chat
+                          </a>
+                          {isPending && (
+                            <button onClick={(e) => handleMarkAsRead(e, match.id)} className="px-3 bg-slate-800 text-slate-300 rounded-lg text-xs font-semibold">
+                              Read
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {notifications.length === 0 && (
+                    <div className="p-4 text-center text-slate-500 text-xs">No matches yet</div>
+                  )}
+                </div>
+              </div>
+            )}
+            
+          </div>
+        </div>
+      )}
     </nav>
   );
 }

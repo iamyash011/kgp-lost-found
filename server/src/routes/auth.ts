@@ -7,25 +7,32 @@ const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // POST /api/auth/google - Verify Google ID token and sign in/up user
 router.post('/google', async (req: Request, res: Response) => {
-  const { idToken, whatsappNumber } = req.body;
-
-  if (!idToken) {
-    return res.status(400).json({ error: 'Missing Google ID token' });
-  }
+  const { idToken, whatsappNumber, userInfo } = req.body;
 
   try {
-    // Verify the token with Google
-    const ticket = await googleClient.verifyIdToken({
-      idToken,
-      audience: process.env.GOOGLE_CLIENT_ID,
-    });
+    let email: string, googleId: string, name: string | undefined;
 
-    const payload = ticket.getPayload();
-    if (!payload || !payload.email || !payload.sub) {
-      return res.status(400).json({ error: 'Invalid Google token' });
+    if (userInfo) {
+      // Path 1: useGoogleLogin (implicit flow) — sends userInfo from /oauth2/v3/userinfo
+      email = userInfo.email;
+      googleId = userInfo.sub;
+      name = userInfo.name;
+    } else if (idToken) {
+      // Path 2: GoogleLogin component (credential flow) — sends ID token
+      const ticket = await googleClient.verifyIdToken({
+        idToken,
+        audience: process.env.GOOGLE_CLIENT_ID,
+      });
+      const payload = ticket.getPayload();
+      if (!payload || !payload.email || !payload.sub) {
+        return res.status(400).json({ error: 'Invalid Google token' });
+      }
+      email = payload.email;
+      googleId = payload.sub;
+      name = payload.name;
+    } else {
+      return res.status(400).json({ error: 'Missing credentials' });
     }
-
-    const { email, sub: googleId, name } = payload;
 
     // CRITICAL: Only allow IIT KGP emails
     if (!email.endsWith('.iitkgp.ac.in')) {
@@ -45,12 +52,14 @@ router.post('/google', async (req: Request, res: Response) => {
           whatsappNumber: whatsappNumber ?? null,
         },
       });
-    } else if (whatsappNumber && !user.whatsappNumber) {
-      // Update WhatsApp number if not set
-      user = await prisma.user.update({
-        where: { id: user.id },
-        data: { whatsappNumber },
-      });
+    } else {
+      // Update whatsapp if provided and not already set
+      if (whatsappNumber && !user.whatsappNumber) {
+        user = await prisma.user.update({
+          where: { id: user.id },
+          data: { whatsappNumber },
+        });
+      }
     }
 
     res.json({ user });

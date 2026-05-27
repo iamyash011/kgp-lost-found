@@ -2,11 +2,11 @@ const API_URL = import.meta.env.PROD ? '' : (import.meta.env.VITE_API_URL || 'ht
 
 export const api = {
   // --- Auth ---
-  loginWithGoogle: async (idToken, whatsappNumber = null) => {
+  loginWithGoogle: async (idToken, whatsappNumber = null, userInfo = null) => {
     const res = await fetch(`${API_URL}/api/auth/google`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ idToken, whatsappNumber }),
+      body: JSON.stringify({ idToken, whatsappNumber, userInfo }),
     });
     if (!res.ok) {
       const data = await res.json();

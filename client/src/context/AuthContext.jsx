@@ -18,9 +18,9 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, []);
 
-  const login = async (idToken, whatsappNumber) => {
+  const login = async (idToken, whatsappNumber, userInfo = null) => {
     try {
-      const { user: userData } = await api.loginWithGoogle(idToken, whatsappNumber);
+      const { user: userData } = await api.loginWithGoogle(idToken, whatsappNumber, userInfo);
       setUser(userData);
       localStorage.setItem('kgp_user', JSON.stringify(userData));
       return userData;

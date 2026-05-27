@@ -107,10 +107,10 @@ export default function Navbar() {
         <div className="flex justify-between h-16 items-center">
           <div className="flex items-center">
             <Link to="/" className="flex items-center gap-2 group">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-black text-lg shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-transform">
-                K
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-emerald-500 rounded-lg flex items-center justify-center text-white shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-transform">
+                <Search className="w-4 h-4" strokeWidth={3.5} />
               </div>
-              <span className="text-lg font-black bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400">
+              <span className="text-xl tracking-wide bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400" style={{ fontFamily: '"Righteous", sans-serif' }}>
                 KGP Find
               </span>
             </Link>

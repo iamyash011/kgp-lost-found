@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
+import { LOCATION_SYNONYMS } from '../utils/locations';
+
 export default function ReportItem() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -19,6 +21,18 @@ export default function ReportItem() {
     location: '',
     identifyingMarks: '',
   });
+
+  const [showLocSuggestions, setShowLocSuggestions] = useState(false);
+
+  // Compute location suggestions dynamically based on input
+  const locationSuggestions = formData.location.length >= 1 ? 
+    Object.entries(LOCATION_SYNONYMS)
+      .filter(([standardName, synonyms]) => {
+        const query = formData.location.toLowerCase();
+        return standardName.toLowerCase().includes(query) || synonyms.some(s => s.includes(query));
+      })
+      .map(([standardName]) => standardName)
+    : [];
 
   // State to hold actual File objects and their temporary preview URLs
   const [selectedFiles, setSelectedFiles] = useState([]); // [{ file, previewUrl }]
@@ -242,7 +256,7 @@ export default function ReportItem() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
+              <div className="relative">
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">
                   {type === 'LOST' ? 'Expected Location *' : 'Found Location *'}
                 </label>
@@ -251,10 +265,34 @@ export default function ReportItem() {
                   type="text" 
                   name="location"
                   value={formData.location}
-                  onChange={handleChange}
+                  onChange={(e) => {
+                    handleChange(e);
+                    setShowLocSuggestions(true);
+                  }}
+                  onFocus={() => setShowLocSuggestions(true)}
+                  onBlur={() => setTimeout(() => setShowLocSuggestions(false), 200)}
                   placeholder="e.g. Nalanda Classroom Complex" 
-                  className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-650 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-all text-xs font-medium" 
+                  className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-650 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-all text-xs font-medium relative z-20" 
                 />
+                
+                {showLocSuggestions && locationSuggestions.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-slate-800 border border-slate-700 rounded-xl shadow-xl overflow-hidden z-30 animate-in fade-in slide-in-from-top-2 duration-150">
+                    <ul className="max-h-48 overflow-y-auto">
+                      {locationSuggestions.map((loc) => (
+                        <li 
+                          key={loc}
+                          onClick={() => {
+                            setFormData(prev => ({ ...prev, location: loc }));
+                            setShowLocSuggestions(false);
+                          }}
+                          className="px-4 py-2.5 text-xs text-slate-200 hover:bg-slate-700 cursor-pointer font-medium transition-colors"
+                        >
+                          {loc}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
               
               <div>

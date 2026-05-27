@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { MapPin, Clock, X, MessageCircle, Tag, AlertCircle, CheckCircle, Trash2, CheckCircle2, Info, Search, Image as ImageIcon } from 'lucide-react';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { getStandardLocation, getSynonymsForLocation } from '../utils/locations';
 
 // Simple time formatter
 const timeAgo = (dateString) => {
@@ -358,13 +359,21 @@ export default function Feed() {
       if (activeFilter !== 'ALL' && item.type !== activeFilter) return false;
     }
 
-    // 2. Filter by search query if it exists
+    // 2. Filter by search query if it exists (Using Synonym Engine)
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      const titleMatch = item.title?.toLowerCase().includes(query);
-      const descMatch = item.description?.toLowerCase().includes(query);
-      const locMatch = item.location?.toLowerCase().includes(query);
-      const marksMatch = item.identifyingMarks?.toLowerCase().includes(query);
+      
+      // Expand query using synonyms for location matching
+      const standardSearchLoc = getStandardLocation(query);
+      const searchWords = standardSearchLoc 
+        ? [...new Set([query, ...getSynonymsForLocation(standardSearchLoc)])] 
+        : [query];
+
+      const titleMatch = searchWords.some(w => item.title?.toLowerCase().includes(w));
+      const descMatch = searchWords.some(w => item.description?.toLowerCase().includes(w));
+      const locMatch = searchWords.some(w => item.location?.toLowerCase().includes(w));
+      const marksMatch = searchWords.some(w => item.identifyingMarks?.toLowerCase().includes(w));
+
       return titleMatch || descMatch || locMatch || marksMatch;
     }
 

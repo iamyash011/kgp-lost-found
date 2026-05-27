@@ -99,7 +99,7 @@ router.post('/', authenticateUser, (req: Request, res: Response, next) => {
       });
 
       // After creating, trigger matching logic
-      await findAndStoreMatches(newItem.id, type, title, description);
+      await findAndStoreMatches(newItem.id, type, title, description, location);
 
       res.status(201).json(newItem);
     } catch (error) {
@@ -213,15 +213,20 @@ router.post('/:id/purge-images', authenticateUser, async (req: Request, res: Res
 });
 
 
+import { getStandardLocation } from '../lib/locations';
+
 /**
  * Simple keyword-based matching logic.
  * After a new item is posted, find items of the opposite type
  * that share keywords in their title or description.
+ * Now upgraded with Location Synonym Engine.
  */
-async function findAndStoreMatches(newItemId: string, type: string, title: string, description: string) {
+async function findAndStoreMatches(newItemId: string, type: string, title: string, description: string, location: string) {
   const oppositeType = type === 'LOST' ? 'FOUND' : 'LOST';
   const keywords = [...new Set([...title.toLowerCase().split(/\s+/), ...description.toLowerCase().split(/\s+/)])]
     .filter((w) => w.length > 3); // ignore short words
+
+  const newStandardLoc = getStandardLocation(location);
 
   const candidates = await prisma.item.findMany({
     where: { type: oppositeType as any, status: 'ACTIVE' },
@@ -234,17 +239,24 @@ async function findAndStoreMatches(newItemId: string, type: string, title: strin
     ];
 
     const commonWords = keywords.filter((w) => candidateWords.includes(w));
-    const score = commonWords.length / keywords.length;
+    let score = commonWords.length / Math.max(keywords.length, 1);
+
+    // Location Synonym Engine Bonus
+    const candidateStandardLoc = getStandardLocation(candidate.location);
+    if (newStandardLoc && candidateStandardLoc && newStandardLoc === candidateStandardLoc) {
+      // If the standardized locations match exactly, provide a massive boost
+      score += 0.5;
+    }
 
     if (score > 0.2) {
-      // More than 20% keyword overlap = potential match
+      // More than 20% total score = potential match
       const lostItemId = type === 'LOST' ? newItemId : candidate.id;
       const foundItemId = type === 'FOUND' ? newItemId : candidate.id;
 
       // Avoid duplicate matches
       const existing = await prisma.match.findFirst({ where: { lostItemId, foundItemId } });
       if (!existing) {
-        await prisma.match.create({ data: { lostItemId, foundItemId, matchScore: score } });
+        await prisma.match.create({ data: { lostItemId, foundItemId, matchScore: Math.min(score, 1.0) } });
       }
     }
   }

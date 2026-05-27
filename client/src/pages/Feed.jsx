@@ -59,7 +59,7 @@ const getImages = (imageUrlString) => {
 function ItemModal({ item, onClose, onActionSuccess }) {
   if (!item) return null;
 
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const isLost = item.type === 'LOST';
   const whatsappNumber = item.user?.whatsappNumber || '0000000000';
   const contactName = item.user?.name || 'Unknown';
@@ -203,6 +203,32 @@ function ItemModal({ item, onClose, onActionSuccess }) {
               </div>
             </div>
           </div>
+
+          {/* Admin Actions */}
+          {isAdmin && !isOwner && (
+            <div className="bg-red-950/20 border border-red-900/50 rounded-2xl p-4 space-y-3 mb-4">
+              <div className="flex items-center gap-2 text-xs text-red-400 font-bold">
+                <AlertCircle className="w-4 h-4" />
+                <span>Admin Controls</span>
+              </div>
+              <button
+                onClick={async () => {
+                  if (window.confirm('ADMIN OVERRIDE: Are you sure you want to delete this report permanently?')) {
+                    try {
+                      await api.deleteItem(item.id);
+                      onActionSuccess('Report deleted by Admin.', 'info');
+                      onClose();
+                    } catch (err) {
+                      onActionSuccess('Failed to delete report.', 'error');
+                    }
+                  }
+                }}
+                className="w-full py-2.5 bg-red-900/40 hover:bg-red-800/50 text-red-300 border border-red-700/30 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <Trash2 className="w-4 h-4" /> Force Delete Report
+              </button>
+            </div>
+          )}
 
           {/* Info note / Actions */}
           {isOwner ? (

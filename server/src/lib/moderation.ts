@@ -1,20 +1,18 @@
-import Filter from 'bad-words';
+const badWords = [
+  'fuck', 'shit', 'bitch', 'asshole', 'cunt', 'dick', 'pussy', 'bastard', 'slut', 'whore',
+  'fag', 'faggot', 'nigger', 'nigga', 'cock', 'cocksucker', 'motherfucker', 'retard'
+];
 
-// Initialize the filter
-const filter = new Filter();
-
-// Optionally add more custom words specific to the college environment if needed
-// filter.addWords('some_custom_bad_word');
-
-/**
- * Scans the provided text fields for profanity.
- * @param texts An array of strings to check.
- * @returns true if any objectionable content is found, false otherwise.
- */
 export const containsProfanity = (texts: (string | null | undefined)[]): boolean => {
   for (const text of texts) {
-    if (text && filter.isProfane(text)) {
-      return true;
+    if (!text) continue;
+    const lowerText = text.toLowerCase();
+    for (const word of badWords) {
+      // Basic check for exact word boundary
+      const regex = new RegExp(`\\b${word}\\b`, 'i');
+      if (regex.test(lowerText)) {
+        return true;
+      }
     }
   }
   return false;

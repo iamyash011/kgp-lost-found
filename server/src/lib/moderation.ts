@@ -1,5 +1,4 @@
-// @ts-ignore
-const Filter = require('bad-words');
+import Filter from 'bad-words';
 
 // Initialize the filter
 const filter = new Filter();

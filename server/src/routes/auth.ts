@@ -13,6 +13,8 @@ const generateToken = (id: string, email: string) => {
   return jwt.sign({ id, email }, JWT_SECRET, { expiresIn: '7d' });
 };
 
+const isValidWhatsapp = (num: string) => /^[6-9]\d{9}$/.test(num);
+
 // POST /api/auth/google - Verify Google ID token and sign in/up user
 router.post('/google', async (req: Request, res: Response) => {
   const { idToken, whatsappNumber, accessToken } = req.body;
@@ -67,6 +69,9 @@ router.post('/google', async (req: Request, res: Response) => {
           error: 'No account found. Please use "Create Account" and provide your WhatsApp number first.',
         });
       }
+      if (!isValidWhatsapp(whatsappNumber)) {
+        return res.status(400).json({ error: 'Invalid WhatsApp number format. Must be 10 digits starting with 6-9.' });
+      }
       user = await prisma.user.create({
         data: {
           googleId,
@@ -77,7 +82,10 @@ router.post('/google', async (req: Request, res: Response) => {
       });
     } else {
       // Returning user — update whatsapp if provided and not already set
-      if (whatsappNumber && !user.whatsappNumber) {
+      if (whatsappNumber) {
+        if (!isValidWhatsapp(whatsappNumber)) {
+          return res.status(400).json({ error: 'Invalid WhatsApp number format. Must be 10 digits starting with 6-9.' });
+        }
         user = await prisma.user.update({
           where: { id: user.id },
           data: { whatsappNumber },
@@ -112,6 +120,10 @@ router.post('/mock-login', async (req: Request, res: Response) => {
     return res.status(403).json({
       error: 'Access denied. Only @kgpian.iitkgp.ac.in email addresses are allowed.',
     });
+  }
+
+  if (whatsappNumber && !isValidWhatsapp(whatsappNumber)) {
+    return res.status(400).json({ error: 'Invalid WhatsApp number format. Must be 10 digits starting with 6-9.' });
   }
 
   try {
@@ -166,9 +178,15 @@ router.get('/me/:userId', async (req: Request, res: Response) => {
 });
 
 // PATCH /api/auth/me/:userId - Update WhatsApp number
-router.patch('/me/:userId', async (req: Request, res: Response) => {
+router.patch('/me/:userId', authenticateUser, async (req: Request, res: Response) => {
   const { whatsappNumber } = req.body;
   try {
+    if (req.user!.id !== req.params['userId']) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+    if (!whatsappNumber || !isValidWhatsapp(whatsappNumber)) {
+      return res.status(400).json({ error: 'Invalid WhatsApp number format. Must be 10 digits starting with 6-9.' });
+    }
     const user = await prisma.user.update({
       where: { id: req.params['userId'] as string },
       data: { whatsappNumber },

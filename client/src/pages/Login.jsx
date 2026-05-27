@@ -41,6 +41,24 @@ export default function Login() {
   const [demoName, setDemoName] = useState('Rahul Verma');
   const [demoEmail, setDemoEmail] = useState('rahul.verma@iitkgp.ac.in');
 
+  // Helper to validate and format Indian mobile number
+  const handleWhatsappChange = (val) => {
+    // Strip non-digits
+    let clean = val.replace(/\D/g, '');
+    // If user pastes a number starting with 91 or 0, strip it to get the 10-digit core
+    if (clean.length > 10) {
+      if (clean.startsWith('91')) clean = clean.slice(2);
+      else if (clean.startsWith('0')) clean = clean.slice(1);
+    }
+    // Limit to 10 digits
+    clean = clean.slice(0, 10);
+    setWhatsapp(clean);
+  };
+
+  const isValidWhatsapp = (num) => {
+    return /^[6-9]\d{9}$/.test(num);
+  };
+
   // useGoogleLogin uses redirect/popup flow — works on ALL devices including mobile
   const googleSignIn = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
@@ -55,7 +73,7 @@ export default function Login() {
         // If backend says this is a new user without WhatsApp, switch to Create Account tab
         if (err.message && err.message.includes('Create Account')) {
           setTab('signup');
-          setError('👋 Looks like you\'re new here! Please enter your WhatsApp number and sign up below.');
+          setError('👋 Looks like you\'re new here! Please enter your valid 10-digit WhatsApp number and sign up below.');
         } else {
           setError(err.message || 'Sign-in failed. Use your @kgpian.iitkgp.ac.in email.');
         }
@@ -80,8 +98,8 @@ export default function Login() {
       setError('Email must be @kgpian.iitkgp.ac.in or admin email');
       return;
     }
-    if (whatsapp.length < 10) {
-      setError('WhatsApp number must be at least 10 digits.');
+    if (!isValidWhatsapp(whatsapp)) {
+      setError('WhatsApp number must be exactly 10 digits starting with 6, 7, 8, or 9.');
       return;
     }
     try {
@@ -153,13 +171,20 @@ export default function Login() {
               <div className="relative">
                 <MessageSquare className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                 <input type="tel" placeholder="e.g. 9876543210" value={whatsapp}
-                  onChange={(e) => setWhatsapp(e.target.value.replace(/\D/g, ''))}
+                  onChange={(e) => handleWhatsappChange(e.target.value)}
                   className={inputClass} />
               </div>
             </div>
 
             <GoogleButton
-              onClick={() => { setSigningIn(true); googleSignIn(); }}
+              onClick={() => {
+                if (whatsapp && !isValidWhatsapp(whatsapp)) {
+                  setError('Invalid WhatsApp number. Must be exactly 10 digits starting with 6-9.');
+                  return;
+                }
+                setSigningIn(true);
+                googleSignIn();
+              }}
               text={signingIn ? 'Signing in…' : 'Continue with Google'}
               disabled={signingIn}
             />
@@ -184,13 +209,13 @@ export default function Login() {
               <div className="relative">
                 <MessageSquare className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                 <input type="tel" placeholder="e.g. 9876543210" value={whatsapp}
-                  onChange={(e) => setWhatsapp(e.target.value.replace(/\D/g, ''))}
+                  onChange={(e) => handleWhatsappChange(e.target.value)}
                   className={inputClass.replace('focus:ring-blue-500/50', 'focus:ring-emerald-500/50')} />
               </div>
               <p className="text-xxs text-slate-500 mt-1.5">Required so matches can reach you directly.</p>
             </div>
 
-            {whatsapp.length >= 10 ? (
+            {isValidWhatsapp(whatsapp) ? (
               <GoogleButton
                 onClick={() => { setSigningIn(true); googleSignIn(); }}
                 text={signingIn ? 'Creating account…' : 'Sign up with Google'}
@@ -198,7 +223,7 @@ export default function Login() {
               />
             ) : (
               <div className="w-full text-xs font-semibold text-slate-500 bg-slate-900/40 px-6 py-3 rounded-xl border border-slate-800 text-center">
-                Enter your WhatsApp number first
+                Enter your 10-digit WhatsApp number first
               </div>
             )}
             <p className="text-xxs text-center text-slate-500">
@@ -228,7 +253,7 @@ export default function Login() {
               <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">WhatsApp Number</label>
               <div className="relative">
                 <MessageSquare className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                <input type="tel" required placeholder="9876543210" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value.replace(/\D/g, ''))} className={inputClass} />
+                <input type="tel" required placeholder="9876543210" value={whatsapp} onChange={(e) => handleWhatsappChange(e.target.value)} className={inputClass} />
               </div>
             </div>
             <button type="submit" className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-emerald-600 hover:from-blue-500 hover:to-emerald-500 text-white rounded-xl text-sm font-semibold shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer">

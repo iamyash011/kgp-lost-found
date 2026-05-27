@@ -44,16 +44,23 @@ router.post('/google', async (req: Request, res: Response) => {
     // Upsert the user in the database
     let user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
+      // New user — WhatsApp number is REQUIRED to create an account
+      if (!whatsappNumber) {
+        return res.status(403).json({
+          code: 'NEW_USER_NEEDS_WHATSAPP',
+          error: 'No account found. Please use "Create Account" and provide your WhatsApp number first.',
+        });
+      }
       user = await prisma.user.create({
         data: {
           googleId,
           email,
           name: name ?? email.split('@')[0],
-          whatsappNumber: whatsappNumber ?? null,
+          whatsappNumber,
         },
       });
     } else {
-      // Update whatsapp if provided and not already set
+      // Returning user — update whatsapp if provided and not already set
       if (whatsappNumber && !user.whatsappNumber) {
         user = await prisma.user.update({
           where: { id: user.id },

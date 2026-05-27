@@ -54,10 +54,16 @@ export default function Login() {
         const userInfo = await userInfoRes.json();
 
         // Send to our backend for verification and upsert
-        const { user: userData } = await login(null, whatsapp || null, userInfo);
+        await login(null, whatsapp || null, userInfo);
         navigate('/');
       } catch (err) {
-        setError(err.message || 'Sign-in failed. Use your @*.iitkgp.ac.in email.');
+        // If backend says this is a new user without WhatsApp, switch to Create Account tab
+        if (err.message && err.message.includes('Create Account')) {
+          setTab('signup');
+          setError('👋 Looks like you\'re new here! Please enter your WhatsApp number and sign up below.');
+        } else {
+          setError(err.message || 'Sign-in failed. Use your @*.iitkgp.ac.in email.');
+        }
         setSigningIn(false);
       }
     },

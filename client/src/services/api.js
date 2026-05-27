@@ -8,11 +8,9 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ idToken, whatsappNumber, userInfo }),
     });
-    if (!res.ok) {
-      const data = await res.json();
-      throw new Error(data.error || 'Login failed');
-    }
-    return res.json();
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Login failed');
+    return data;
   },
 
   loginWithMock: async (name, email, whatsappNumber) => {

@@ -474,7 +474,7 @@ export default function Feed() {
             const images = getImages(item.imageUrl);
             const displayImg = images.length > 0
               ? (images[0].startsWith('http') ? images[0] : `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${images[0]}`)
-              : 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=500&q=80';
+              : null;
 
             return (
               <div
@@ -482,8 +482,15 @@ export default function Feed() {
                 onClick={() => setSelectedItem(item)}
                 className="group flex flex-col bg-slate-800/20 border border-slate-700/50 rounded-2xl overflow-hidden hover:bg-slate-800/40 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-blue-500/5 cursor-pointer relative"
               >
-                <div className="relative h-48 overflow-hidden bg-slate-900">
-                  <img src={displayImg} alt={item.title} className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-500" />
+                <div className="relative h-48 overflow-hidden bg-slate-900 border-b border-slate-800/50">
+                  {displayImg ? (
+                    <img src={displayImg} alt={item.title} className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-500" />
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center bg-slate-800/30 text-slate-600 group-hover:text-slate-500 transition-colors">
+                      <ImageIcon className="w-10 h-10 mb-2 opacity-40" strokeWidth={1.5} />
+                      <span className="text-xs font-semibold tracking-wide opacity-40">No Image</span>
+                    </div>
+                  )}
                   
                   {/* Type badge */}
                   <div className="absolute top-3 left-3">

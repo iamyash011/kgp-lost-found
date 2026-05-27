@@ -1,8 +1,6 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import path from 'path';
-import fs from 'fs';
 import authRoutes from './routes/auth';
 import itemRoutes from './routes/items';
 import notificationRoutes from './routes/notifications';
@@ -14,7 +12,11 @@ dotenv.config();
 
 const app = express();
 
-app.use(cors({ origin: ['http://localhost:5173', 'http://localhost:5174'], credentials: true }));
+// Allow localhost in dev, and all Vercel/production origins
+const allowedOrigins = process.env.NODE_ENV === 'production'
+  ? true  // Allow all origins in production (same-domain on Vercel)
+  : ['http://localhost:5173', 'http://localhost:5174'];
+app.use(cors({ origin: allowedOrigins, credentials: true }));
 app.use(express.json());
 
 

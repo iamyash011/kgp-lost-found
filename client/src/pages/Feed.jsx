@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { MapPin, Clock, X, MessageCircle, Tag, AlertCircle, CheckCircle, Trash2, CheckCircle2, Info, Search } from 'lucide-react';
+import { MapPin, Clock, X, MessageCircle, Tag, AlertCircle, CheckCircle, Trash2, CheckCircle2, Info, Search, Image as ImageIcon } from 'lucide-react';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 

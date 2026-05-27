@@ -49,23 +49,7 @@ router.post('/', (req: Request, res: Response, next) => {
       return res.status(400).json({ error: err.message });
     }
 
-    // Check total size of uploaded files
-    if (req.files && Array.isArray(req.files)) {
-      const totalSize = req.files.reduce((acc, file) => acc + file.size, 0);
-      if (totalSize > 5 * 1024 * 1024) {
-        // Delete uploaded files from Cloudinary
-        const { v2: cloudinary } = require('cloudinary');
-        for (const file of req.files) {
-          try {
-            await cloudinary.uploader.destroy(file.filename);
-          } catch (e) {
-            console.error('Failed to clean up file after size error', e);
-          }
-        }
-        return res.status(400).json({ error: 'Total image size exceeds the 5MB combined limit.' });
-      }
-    }
-
+    // Note: file.size is 0 for Cloudinary uploads (stream-based), size limit enforced on frontend
     const { userId, type, title, description, location, identifyingMarks, imageUrl: manualUrl } = req.body;
 
     if (!userId || !type || !title || !description || !location) {

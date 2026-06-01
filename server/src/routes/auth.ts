@@ -51,11 +51,11 @@ router.post('/google', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Missing credentials' });
     }
 
-    // CRITICAL: Only allow IIT KGP student emails or the admin email
+    // CRITICAL: Only allow IIT KGP emails or the admin email
     const emailLower = email.toLowerCase();
-    if (!emailLower.endsWith('@kgpian.iitkgp.ac.in') && emailLower !== 'kgp.lost.found@gmail.com') {
+    if (!emailLower.endsWith('iitkgp.ac.in') && emailLower !== 'kgp.lost.found@gmail.com') {
       return res.status(403).json({
-        error: 'Access denied. Only @kgpian.iitkgp.ac.in email addresses are allowed.',
+        error: 'Access denied. Only IIT KGP email addresses are allowed.',
       });
     }
 
@@ -114,11 +114,11 @@ router.post('/mock-login', async (req: Request, res: Response) => {
     return res.status(400).json({ error: 'Missing email address' });
   }
 
-  // Only allow IIT KGP student emails or the admin email
+  // Only allow IIT KGP emails or the admin email
   const emailLower = email.toLowerCase();
-  if (!emailLower.endsWith('@kgpian.iitkgp.ac.in') && emailLower !== 'kgp.lost.found@gmail.com') {
+  if (!emailLower.endsWith('iitkgp.ac.in') && emailLower !== 'kgp.lost.found@gmail.com') {
     return res.status(403).json({
-      error: 'Access denied. Only @kgpian.iitkgp.ac.in email addresses are allowed.',
+      error: 'Access denied. Only IIT KGP email addresses are allowed.',
     });
   }
 

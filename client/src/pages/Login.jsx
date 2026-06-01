@@ -64,7 +64,7 @@ export default function Login() {
           setTab('signup');
           setError('👋 Looks like you\'re new here! Please enter your valid 10-digit WhatsApp number and sign up below.');
         } else {
-          setError(err.message || 'Sign-in failed. Use your @kgpian.iitkgp.ac.in email.');
+          setError(err.message || 'Sign-in failed. Use your @iitkgp.ac.in email.');
         }
         setSigningIn(false);
       }
@@ -83,8 +83,8 @@ export default function Login() {
       setError('Please fill in all fields.');
       return;
     }
-    if (!demoEmail.endsWith('@kgpian.iitkgp.ac.in') && demoEmail !== 'kgp.lost.found@gmail.com') {
-      setError('Email must be @kgpian.iitkgp.ac.in or admin email');
+    if (!demoEmail.endsWith('iitkgp.ac.in') && demoEmail !== 'kgp.lost.found@gmail.com') {
+      setError('Email must be @iitkgp.ac.in or admin email');
       return;
     }
     if (!isValidWhatsapp(whatsapp)) {
@@ -178,7 +178,7 @@ export default function Login() {
               disabled={signingIn}
             />
             <p className="text-[10px] text-center text-slate-500">
-              Only <strong className="text-slate-400">@kgpian.iitkgp.ac.in</strong> emails are allowed.
+              Only <strong className="text-slate-400">IIT KGP</strong> emails are allowed.
             </p>
           </div>
         )}
@@ -216,7 +216,7 @@ export default function Login() {
               </div>
             )}
             <p className="text-[10px] text-center text-slate-500">
-              Only <strong className="text-slate-400">@kgpian.iitkgp.ac.in</strong> emails are allowed.
+              Only <strong className="text-slate-400">IIT KGP</strong> emails are allowed.
             </p>
           </div>
         )}

@@ -3,71 +3,132 @@ import prisma from '../lib/prisma';
 import { upload } from '../lib/upload';
 import { authenticateUser, optionalAuth } from '../middleware/auth';
 import { containsProfanity } from '../lib/moderation';
+import { getStandardLocation } from '../lib/locations';
 
 const router = Router();
 
-// GET /api/items - Get all active items (with optional type filter)
+// ─── GET /api/items — Privacy-aware listing ────────────
 router.get('/', optionalAuth, async (req: Request, res: Response) => {
-  const { type } = req.query;
+  const { type, category } = req.query;
   try {
     const items = await prisma.item.findMany({
       where: {
         status: 'ACTIVE',
         ...(type ? { type: type as 'LOST' | 'FOUND' } : {}),
+        ...(category ? { category: category as string } : {}),
       },
       include: {
         user: {
-          select: { name: true, whatsappNumber: true, email: true },
+          select: { id: true, name: true, whatsappNumber: true, email: true, trustScore: true },
         },
       },
       orderBy: { createdAt: 'desc' },
     });
 
-    // If not authenticated, strip whatsappNumber
-    if (!req.user) {
-      items.forEach((item) => {
-        if (item.user) (item.user as any).whatsappNumber = null;
-      });
-    }
+    // Apply privacy rules
+    const sanitized = items.map((item) => {
+      const isOwner = req.user?.id === item.userId;
+      const isAdmin = req.user?.isAdmin;
 
-    res.json(items);
+      return {
+        ...item,
+        user: {
+          id: item.user.id,
+          name: (isOwner || isAdmin || item.showPosterName) ? item.user.name : null,
+          whatsappNumber: (isOwner || isAdmin || item.showPosterWhatsapp) ? item.user.whatsappNumber : null,
+          email: (isOwner || isAdmin) ? item.user.email : null,
+          trustScore: item.user.trustScore,
+          isVerified: true, // all users are verified campus users
+        },
+      };
+    });
+
+    res.json(sanitized);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch items' });
   }
 });
 
-// GET /api/items/:id - Get a single item by ID
+// ─── GET /api/items/:id — Single item with privacy ────
 router.get('/:id', optionalAuth, async (req: Request, res: Response) => {
   try {
     const item = await prisma.item.findUnique({
       where: { id: req.params['id'] as string },
       include: {
-        user: { select: { name: true, whatsappNumber: true } },
+        user: { select: { id: true, name: true, whatsappNumber: true, trustScore: true } },
       },
     });
     if (!item) return res.status(404).json({ error: 'Item not found' });
 
-    // If not authenticated, strip whatsappNumber
-    if (!req.user && item.user) {
-      (item.user as any).whatsappNumber = null;
-    }
+    const isOwner = req.user?.id === item.userId;
+    const isAdmin = req.user?.isAdmin;
 
-    res.json(item);
+    const sanitized = {
+      ...item,
+      user: {
+        id: item.user.id,
+        name: (isOwner || isAdmin || item.showPosterName) ? item.user.name : null,
+        whatsappNumber: (isOwner || isAdmin || item.showPosterWhatsapp) ? item.user.whatsappNumber : null,
+        trustScore: item.user.trustScore,
+        isVerified: true,
+      },
+    };
+
+    res.json(sanitized);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch item' });
   }
 });
 
-// POST /api/items - Create a new lost/found report with up to 3 images
+// ─── GET /api/items/:id/matches — Potential matches for an item ──
+router.get('/:id/matches', authenticateUser, async (req: Request, res: Response) => {
+  try {
+    const itemId = req.params['id'] as string;
+    const item = await prisma.item.findUnique({ where: { id: itemId } });
+    if (!item) return res.status(404).json({ error: 'Item not found' });
+
+    // Only the owner can view matches for their item
+    if (item.userId !== req.user!.id && !req.user!.isAdmin) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    const matches = await prisma.match.findMany({
+      where: item.type === 'LOST'
+        ? { lostItemId: itemId }
+        : { foundItemId: itemId },
+      include: {
+        lostItem: {
+          include: { user: { select: { id: true, name: true, trustScore: true } } },
+        },
+        foundItem: {
+          include: { user: { select: { id: true, name: true, trustScore: true } } },
+        },
+      },
+      orderBy: { matchScore: 'desc' },
+      take: 10,
+    });
+
+    res.json(matches);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch matches' });
+  }
+});
+
+// ─── POST /api/items — Create item with new fields ────
 router.post('/', authenticateUser, (req: Request, res: Response, next) => {
   upload.array('images', 3)(req, res, async (err) => {
     if (err) {
       return res.status(400).json({ error: err.message });
     }
 
-    // Use req.user.id securely, ignore userId from body
     const userId = req.user!.id;
-    const { type, title, description, location, identifyingMarks, imageUrl: manualUrl } = req.body;
+    const {
+      type, title, description, location, identifyingMarks,
+      imageUrl: manualUrl,
+      category, color, brand, dateOccurred,
+      showPosterName, showPosterWhatsapp,
+      sensitiveImage, urgency, reward,
+    } = req.body;
 
     if (!type || !title || !description || !location) {
       return res.status(400).json({ error: 'Missing required fields' });
@@ -83,7 +144,6 @@ router.post('/', authenticateUser, (req: Request, res: Response, next) => {
         images = (req.files as Express.Multer.File[]).map((file) => file.path);
       }
 
-      // If no files uploaded, fallback to manually provided URL (for testing/backward compatibility)
       let storedImageUrl: string | null = null;
       if (images.length > 0) {
         storedImageUrl = JSON.stringify(images);
@@ -100,11 +160,20 @@ router.post('/', authenticateUser, (req: Request, res: Response, next) => {
           location,
           identifyingMarks: identifyingMarks || null,
           imageUrl: storedImageUrl,
+          category: category || null,
+          color: color || null,
+          brand: brand || null,
+          dateOccurred: dateOccurred ? new Date(dateOccurred) : null,
+          showPosterName: showPosterName === 'true' || showPosterName === true,
+          showPosterWhatsapp: showPosterWhatsapp === 'true' || showPosterWhatsapp === true,
+          sensitiveImage: sensitiveImage === 'true' || sensitiveImage === true,
+          urgency: urgency === 'URGENT' ? 'URGENT' : 'NORMAL',
+          reward: reward || null,
         },
       });
 
-      // After creating, trigger matching logic
-      await findAndStoreMatches(newItem.id, type, title, description, location);
+      // Trigger multi-factor matching
+      await findAndStoreMatches(newItem);
 
       res.status(201).json(newItem);
     } catch (error) {
@@ -114,7 +183,7 @@ router.post('/', authenticateUser, (req: Request, res: Response, next) => {
   });
 });
 
-// PATCH /api/items/:id/resolve - Mark an item as resolved
+// ─── PATCH /api/items/:id/resolve ──────────────────────
 router.patch('/:id/resolve', authenticateUser, async (req: Request, res: Response) => {
   try {
     const item = await prisma.item.findUnique({ where: { id: req.params['id'] as string } });
@@ -134,7 +203,7 @@ router.patch('/:id/resolve', authenticateUser, async (req: Request, res: Respons
   }
 });
 
-// DELETE /api/items/:id - Delete an item
+// ─── DELETE /api/items/:id ─────────────────────────────
 router.delete('/:id', authenticateUser, async (req: Request, res: Response) => {
   try {
     const item = await prisma.item.findUnique({ where: { id: req.params['id'] as string } });
@@ -163,6 +232,12 @@ router.delete('/:id', authenticateUser, async (req: Request, res: Response) => {
       }
     }
 
+    // Delete associated claims and matches first
+    await prisma.claim.deleteMany({ where: { itemId: item.id } });
+    await prisma.match.deleteMany({
+      where: { OR: [{ lostItemId: item.id }, { foundItemId: item.id }] },
+    });
+
     await prisma.item.delete({ where: { id: item.id } });
     res.json({ message: 'Item deleted successfully' });
   } catch (error) {
@@ -170,7 +245,7 @@ router.delete('/:id', authenticateUser, async (req: Request, res: Response) => {
   }
 });
 
-// POST /api/items/:id/purge-images - Delete uploaded files on server disk to save space
+// ─── POST /api/items/:id/purge-images ──────────────────
 router.post('/:id/purge-images', authenticateUser, async (req: Request, res: Response) => {
   const itemId = req.params['id'] as string;
   try {
@@ -200,10 +275,9 @@ router.post('/:id/purge-images', authenticateUser, async (req: Request, res: Res
           }
         }
       } catch (e) {
-        // Fallback for non-JSON or single legacy imageUrl
+        // Fallback for non-JSON
       }
 
-      // Clear in the DB
       await prisma.item.update({
         where: { id: itemId },
         data: { imageUrl: null }
@@ -218,53 +292,138 @@ router.post('/:id/purge-images', authenticateUser, async (req: Request, res: Res
 });
 
 
-import { getStandardLocation } from '../lib/locations';
+// ═══════════════════════════════════════════════════════
+// Multi-factor matching algorithm
+// ═══════════════════════════════════════════════════════
 
-/**
- * Simple keyword-based matching logic.
- * After a new item is posted, find items of the opposite type
- * that share keywords in their title or description.
- * Now upgraded with Location Synonym Engine.
- */
-async function findAndStoreMatches(newItemId: string, type: string, title: string, description: string, location: string) {
-  const oppositeType = type === 'LOST' ? 'FOUND' : 'LOST';
-  const keywords = [...new Set([...title.toLowerCase().split(/\s+/), ...description.toLowerCase().split(/\s+/)])]
-    .filter((w) => w.length > 3); // ignore short words
+interface MatchableItem {
+  id: string;
+  type: string;
+  title: string;
+  description: string;
+  location: string;
+  category: string | null;
+  color: string | null;
+  brand: string | null;
+  dateOccurred: Date | null;
+  userId: string;
+}
 
-  const newStandardLoc = getStandardLocation(location);
+async function findAndStoreMatches(newItem: MatchableItem) {
+  const oppositeType = newItem.type === 'LOST' ? 'FOUND' : 'LOST';
 
   const candidates = await prisma.item.findMany({
     where: { type: oppositeType as any, status: 'ACTIVE' },
+    include: { user: { select: { id: true } } },
   });
 
+  const newKeywords = extractKeywords(newItem.title + ' ' + newItem.description);
+  const newStandardLoc = getStandardLocation(newItem.location);
+
   for (const candidate of candidates) {
-    const candidateWords = [
-      ...candidate.title.toLowerCase().split(/\s+/),
-      ...candidate.description.toLowerCase().split(/\s+/),
-    ];
+    let score = 0;
 
-    const commonWords = keywords.filter((w) => candidateWords.includes(w));
-    let score = commonWords.length / Math.max(keywords.length, 1);
-
-    // Location Synonym Engine Bonus
-    const candidateStandardLoc = getStandardLocation(candidate.location);
-    if (newStandardLoc && candidateStandardLoc && newStandardLoc === candidateStandardLoc) {
-      // If the standardized locations match exactly, provide a massive boost
-      score += 0.5;
+    // 1. Category match (+0.3)
+    if (newItem.category && candidate.category &&
+        newItem.category.toLowerCase() === candidate.category.toLowerCase()) {
+      score += 0.3;
     }
 
-    if (score > 0.2) {
-      // More than 20% total score = potential match
-      const lostItemId = type === 'LOST' ? newItemId : candidate.id;
-      const foundItemId = type === 'FOUND' ? newItemId : candidate.id;
+    // 2. Keyword overlap (up to +0.3)
+    const candidateKeywords = extractKeywords(candidate.title + ' ' + candidate.description);
+    const commonWords = newKeywords.filter(w => candidateKeywords.includes(w));
+    const keywordScore = commonWords.length / Math.max(newKeywords.length, 1);
+    score += Math.min(keywordScore, 1) * 0.3;
+
+    // 3. Location match (+0.2)
+    const candidateStandardLoc = getStandardLocation(candidate.location);
+    if (newStandardLoc && candidateStandardLoc && newStandardLoc === candidateStandardLoc) {
+      score += 0.2;
+    }
+
+    // 4. Color match (+0.1)
+    if (newItem.color && candidate.color &&
+        newItem.color.toLowerCase() === candidate.color.toLowerCase()) {
+      score += 0.1;
+    }
+
+    // 5. Brand match (+0.1)
+    if (newItem.brand && candidate.brand &&
+        newItem.brand.toLowerCase() === candidate.brand.toLowerCase()) {
+      score += 0.1;
+    }
+
+    // 6. Date proximity — within 3 days (+0.1)
+    if (newItem.dateOccurred && candidate.dateOccurred) {
+      const daysDiff = Math.abs(
+        (newItem.dateOccurred.getTime() - candidate.dateOccurred.getTime()) / (1000 * 60 * 60 * 24)
+      );
+      if (daysDiff <= 3) {
+        score += 0.1;
+      }
+    }
+
+    // Minimum threshold to create a match
+    if (score >= 0.2) {
+      const lostItemId = newItem.type === 'LOST' ? newItem.id : candidate.id;
+      const foundItemId = newItem.type === 'FOUND' ? newItem.id : candidate.id;
 
       // Avoid duplicate matches
       const existing = await prisma.match.findFirst({ where: { lostItemId, foundItemId } });
       if (!existing) {
-        await prisma.match.create({ data: { lostItemId, foundItemId, matchScore: Math.min(score, 1.0) } });
+        const match = await prisma.match.create({
+          data: { lostItemId, foundItemId, matchScore: Math.min(score, 1.0) },
+        });
+
+        // Notify both users about the match
+        const lostItem = newItem.type === 'LOST' ? newItem : candidate;
+        const foundItem = newItem.type === 'FOUND' ? newItem : candidate;
+
+        // Notify the lost item's owner
+        await prisma.notification.create({
+          data: {
+            userId: lostItem.userId,
+            type: 'MATCH',
+            title: 'Potential Match Found!',
+            message: `A found "${foundItem.title}" near ${foundItem.location} could match your lost "${lostItem.title}".`,
+            relatedId: match.id,
+          },
+        });
+
+        // Notify the found item's poster
+        await prisma.notification.create({
+          data: {
+            userId: foundItem.userId,
+            type: 'MATCH',
+            title: 'Potential Match Found!',
+            message: `Someone lost a "${lostItem.title}" near ${lostItem.location} — it could match your found "${foundItem.title}".`,
+            relatedId: match.id,
+          },
+        });
       }
     }
   }
+}
+
+function extractKeywords(text: string): string[] {
+  const stopWords = new Set([
+    'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for',
+    'of', 'with', 'by', 'from', 'is', 'it', 'was', 'are', 'were', 'been',
+    'be', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could',
+    'should', 'may', 'might', 'shall', 'can', 'need', 'dare', 'ought', 'used',
+    'this', 'that', 'these', 'those', 'my', 'your', 'his', 'her', 'its', 'our',
+    'their', 'what', 'which', 'who', 'whom', 'where', 'when', 'how', 'not',
+    'no', 'nor', 'as', 'if', 'then', 'than', 'too', 'very', 'just', 'about',
+    'near', 'found', 'lost', 'item', 'please', 'help', 'someone', 'think',
+    'i', 'me', 'we', 'us', 'you', 'he', 'she', 'they', 'them',
+  ]);
+
+  return [...new Set(
+    text.toLowerCase()
+      .replace(/[^a-z0-9\s]/g, ' ')
+      .split(/\s+/)
+      .filter(w => w.length > 2 && !stopWords.has(w))
+  )];
 }
 
 export default router;

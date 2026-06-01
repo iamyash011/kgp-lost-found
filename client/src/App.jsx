@@ -1,10 +1,13 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
+import RouteTracker from './components/RouteTracker';
 import Navbar from './components/Navbar';
 import Feed from './pages/Feed';
 import ReportItem from './pages/ReportItem';
 import Login from './pages/Login';
 import AdminDashboard from './pages/AdminDashboard';
 import { useAuth } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
+import Profile from './pages/Profile';
 
 function ProtectedRoute({ children }) {
   const { user } = useAuth();
@@ -19,15 +22,16 @@ function AdminRoute({ children }) {
   return children;
 }
 
-import { ThemeProvider } from './context/ThemeContext';
-import Profile from './pages/Profile';
-
 function App() {
   return (
     <ThemeProvider>
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-900 transition-colors duration-300 selection:bg-blue-500/30 font-body">
+      <div className="min-h-screen bg-[#080e1a] text-white selection:bg-blue-500/30 font-body relative overflow-hidden">
+        {/* Global ambient background glow */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-[500px] bg-blue-500/10 blur-[120px] rounded-[100%] pointer-events-none -z-10" />
+        
+        <RouteTracker />
         <Navbar />
-        <main>
+        <main className="relative z-10">
           <Routes>
             <Route path="/" element={<Feed />} />
             <Route path="/login" element={<Login />} />

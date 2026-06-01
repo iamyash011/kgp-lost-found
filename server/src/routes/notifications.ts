@@ -1,57 +1,67 @@
 import { Router, Request, Response } from 'express';
 import prisma from '../lib/prisma';
+import { authenticateUser } from '../middleware/auth';
 
 const router = Router();
 
-// GET /api/notifications/:userId - Get all pending match notifications for a user
-router.get('/:userId', async (req: Request, res: Response) => {
-  const userId = req.params['userId'] as string;
+router.use(authenticateUser);
 
+// ─── GET /api/notifications — All notifications for user ──
+router.get('/', async (req: Request, res: Response) => {
   try {
-    // Find all items belonging to this user
-    const userItems = await prisma.item.findMany({
-      where: { userId },
-      select: { id: true, type: true },
-    });
-
-    const lostItemIds = userItems.filter((i) => i.type === 'LOST').map((i) => i.id);
-    const foundItemIds = userItems.filter((i) => i.type === 'FOUND').map((i) => i.id);
-
-    // Find matches where the user's items are involved
-    const matches = await prisma.match.findMany({
-      where: {
-        OR: [
-          { lostItemId: { in: lostItemIds } },
-          { foundItemId: { in: foundItemIds } },
-        ],
-      },
-      include: {
-        lostItem: {
-          include: { user: { select: { name: true, whatsappNumber: true } } },
-        },
-        foundItem: {
-          include: { user: { select: { name: true, whatsappNumber: true } } },
-        },
-      },
+    const notifications = await prisma.notification.findMany({
+      where: { userId: req.user!.id },
       orderBy: { createdAt: 'desc' },
+      take: 50,
     });
-
-    res.json(matches);
+    res.json(notifications);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch notifications' });
   }
 });
 
-// PATCH /api/notifications/:matchId/read - Mark a match notification as notified
-router.patch('/:matchId/read', async (req: Request, res: Response) => {
+// ─── GET /api/notifications/unread-count — Quick badge count ──
+router.get('/unread-count', async (req: Request, res: Response) => {
   try {
-    const updated = await prisma.match.update({
-      where: { id: req.params['matchId'] as string },
-      data: { status: 'NOTIFIED' },
+    const count = await prisma.notification.count({
+      where: { userId: req.user!.id, isRead: false },
+    });
+    res.json({ count });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch unread count' });
+  }
+});
+
+// ─── PATCH /api/notifications/:id/read — Mark one as read ──
+router.patch('/:id/read', async (req: Request, res: Response) => {
+  try {
+    const notif = await prisma.notification.findUnique({
+      where: { id: req.params['id'] as string },
+    });
+    if (!notif || notif.userId !== req.user!.id) {
+      return res.status(404).json({ error: 'Notification not found' });
+    }
+
+    const updated = await prisma.notification.update({
+      where: { id: notif.id },
+      data: { isRead: true },
     });
     res.json(updated);
   } catch (error) {
     res.status(500).json({ error: 'Failed to update notification' });
+  }
+});
+
+// ─── PATCH /api/notifications/read-all — Mark all as read ──
+router.patch('/read-all', async (req: Request, res: Response) => {
+  try {
+    await prisma.notification.updateMany({
+      where: { userId: req.user!.id, isRead: false },
+      data: { isRead: true },
+    });
+    res.json({ message: 'All notifications marked as read' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to mark all as read' });
   }
 });
 

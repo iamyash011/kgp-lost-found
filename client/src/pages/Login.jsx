@@ -11,7 +11,7 @@ function GoogleButton({ onClick, text = 'Continue with Google', disabled }) {
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="w-full flex items-center justify-center gap-3 bg-white hover:bg-gray-50 active:bg-gray-100 text-gray-800 font-semibold py-3 px-4 rounded-xl border border-gray-300 shadow-sm transition-all active:scale-[0.98] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+      className="w-full flex items-center justify-center gap-3 bg-white hover:bg-gray-50 active:bg-gray-100 text-gray-800 font-semibold py-3 px-4 rounded-xl shadow-md transition-all active:scale-[0.98] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
     >
       {/* Google SVG logo */}
       <svg width="20" height="20" viewBox="0 0 48 48">
@@ -34,23 +34,16 @@ export default function Login() {
   const [signingIn, setSigningIn] = useState(false);
   const isDev = !import.meta.env.PROD;
 
-  // 'signin' | 'signup' | 'demo'
   const [tab, setTab] = useState('signin');
-
-  // Demo user states
   const [demoName, setDemoName] = useState('Rahul Verma');
   const [demoEmail, setDemoEmail] = useState('rahul.verma@iitkgp.ac.in');
 
-  // Helper to validate and format Indian mobile number
   const handleWhatsappChange = (val) => {
-    // Strip non-digits
     let clean = val.replace(/\D/g, '');
-    // If user pastes a number starting with 91 or 0, strip it to get the 10-digit core
     if (clean.length > 10) {
       if (clean.startsWith('91')) clean = clean.slice(2);
       else if (clean.startsWith('0')) clean = clean.slice(1);
     }
-    // Limit to 10 digits
     clean = clean.slice(0, 10);
     setWhatsapp(clean);
   };
@@ -59,18 +52,14 @@ export default function Login() {
     return /^[6-9]\d{9}$/.test(num);
   };
 
-  // useGoogleLogin uses redirect/popup flow — works on ALL devices including mobile
   const googleSignIn = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       try {
         setSigningIn(true);
         setError('');
-
-        // Send to our backend for verification and upsert
         await login(null, whatsapp || null, tokenResponse.access_token);
         navigate('/');
       } catch (err) {
-        // If backend says this is a new user without WhatsApp, switch to Create Account tab
         if (err.message && err.message.includes('Create Account')) {
           setTab('signup');
           setError('👋 Looks like you\'re new here! Please enter your valid 10-digit WhatsApp number and sign up below.');
@@ -113,36 +102,36 @@ export default function Login() {
 
   const switchTab = (t) => { setTab(t); setError(''); setWhatsapp(''); };
 
-  const inputClass = "w-full bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700/80 rounded-xl pl-11 pr-4 py-3 text-slate-900 dark:text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all text-sm font-medium";
+  const inputClass = "w-full bg-white/[0.04] border border-white/[0.08] rounded-xl pl-11 pr-4 py-3 text-white placeholder:text-slate-600 focus:outline-none focus:border-blue-500/40 focus:ring-1 focus:ring-blue-500/20 transition-all text-sm font-medium";
 
   return (
     <div className="min-h-[85vh] flex items-center justify-center px-4 relative overflow-hidden">
       <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
 
-      <div className="max-w-md w-full bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-200 dark:border-slate-700/50 p-8 rounded-3xl shadow-2xl shadow-black/40 backdrop-blur-xl relative z-10">
+      <div className="max-w-md w-full bg-[#0d1424]/80 border border-white/[0.06] p-8 rounded-3xl shadow-2xl backdrop-blur-xl relative z-10">
         {/* Header */}
         <div className="text-center mb-8">
           <div className="inline-flex p-3 bg-gradient-to-tr from-blue-600/20 to-emerald-600/20 rounded-3xl border border-blue-500/30 mb-4 shadow-lg">
             <Sparkles className="w-8 h-8 text-blue-400 animate-pulse" />
           </div>
-          <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight font-heading">KGP Find</h1>
-          <p className="text-slate-600 dark:text-slate-400 dark:text-slate-400 text-sm mt-1">Lost &amp; Found Hub for IIT Kharagpur</p>
+          <h1 className="text-3xl font-extrabold text-white tracking-tight font-heading">KGP Find</h1>
+          <p className="text-slate-400 text-sm mt-1">Lost & Found Hub for IIT Kharagpur</p>
         </div>
 
         {/* Tab Bar */}
-        <div className="flex bg-white dark:bg-slate-900/60 p-1 rounded-xl mb-6 border border-slate-200 dark:border-slate-700/40 gap-1">
+        <div className="flex bg-white/[0.03] p-1 rounded-xl mb-6 border border-white/[0.06] gap-1">
           <button type="button" onClick={() => switchTab('signin')}
-            className={`flex-1 py-2.5 rounded-lg text-xs font-semibold tracking-wide transition-all flex items-center justify-center gap-1.5 cursor-pointer ${tab === 'signin' ? 'bg-blue-600 text-slate-900 dark:text-white shadow-md' : 'text-slate-600 dark:text-slate-400 dark:text-slate-400 hover:text-slate-800 dark:text-slate-200'}`}>
+            className={`flex-1 py-2.5 rounded-lg text-xs font-semibold tracking-wide transition-all flex items-center justify-center gap-1.5 cursor-pointer ${tab === 'signin' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-500 hover:text-white'}`}>
             <LogIn className="w-3.5 h-3.5" /> Sign In
           </button>
           <button type="button" onClick={() => switchTab('signup')}
-            className={`flex-1 py-2.5 rounded-lg text-xs font-semibold tracking-wide transition-all flex items-center justify-center gap-1.5 cursor-pointer ${tab === 'signup' ? 'bg-emerald-600 text-slate-900 dark:text-white shadow-md' : 'text-slate-600 dark:text-slate-400 dark:text-slate-400 hover:text-slate-800 dark:text-slate-200'}`}>
+            className={`flex-1 py-2.5 rounded-lg text-xs font-semibold tracking-wide transition-all flex items-center justify-center gap-1.5 cursor-pointer ${tab === 'signup' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-500 hover:text-white'}`}>
             <UserPlus className="w-3.5 h-3.5" /> Create Account
           </button>
           {isDev && (
             <button type="button" onClick={() => switchTab('demo')}
-              className={`flex-1 py-2.5 rounded-lg text-xs font-semibold tracking-wide transition-all flex items-center justify-center gap-1.5 cursor-pointer ${tab === 'demo' ? 'bg-slate-600 text-slate-900 dark:text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:text-slate-700 dark:text-slate-300'}`}>
+              className={`flex-1 py-2.5 rounded-lg text-xs font-semibold tracking-wide transition-all flex items-center justify-center gap-1.5 cursor-pointer ${tab === 'demo' ? 'bg-slate-600 text-white shadow-md' : 'text-slate-500 hover:text-white'}`}>
               Dev
             </button>
           )}
@@ -150,26 +139,26 @@ export default function Login() {
 
         {/* Error Banner */}
         {error && (
-          <div className="mb-5 p-4 bg-red-500/10 border border-red-500/20 rounded-3xl flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
-            <p className="text-xs text-red-200 leading-relaxed">{error}</p>
+          <div className="mb-5 p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-start gap-3">
+            <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+            <p className="text-xs text-red-300 leading-relaxed font-medium">{error}</p>
           </div>
         )}
 
         {/* SIGN IN TAB */}
         {tab === 'signin' && (
           <div className="space-y-5">
-            <div className="p-4 bg-blue-500/5 border border-blue-500/10 rounded-3xl">
-              <p className="text-xs text-slate-700 dark:text-slate-300 font-semibold mb-0.5">Welcome back!</p>
-              <p className="text-xxs text-slate-600 dark:text-slate-400 leading-relaxed">Sign in with your IIT KGP Google account to access your reports and notifications.</p>
+            <div className="p-4 bg-blue-500/5 border border-blue-500/10 rounded-xl">
+              <p className="text-xs text-white font-semibold mb-0.5">Welcome back!</p>
+              <p className="text-[11px] text-slate-400 leading-relaxed">Sign in with your IIT KGP Google account to access your reports and notifications.</p>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 dark:text-slate-400 mb-2">
+              <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2">
                 WhatsApp <span className="text-slate-600 font-normal normal-case">(optional — updates your contact)</span>
               </label>
               <div className="relative">
-                <MessageSquare className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 dark:text-slate-400" />
+                <MessageSquare className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                 <input type="tel" placeholder="e.g. 9876543210" value={whatsapp}
                   onChange={(e) => handleWhatsappChange(e.target.value)}
                   className={inputClass} />
@@ -188,8 +177,8 @@ export default function Login() {
               text={signingIn ? 'Signing in…' : 'Continue with Google'}
               disabled={signingIn}
             />
-            <p className="text-xxs text-center text-slate-600 dark:text-slate-400">
-              Only <strong className="text-slate-600 dark:text-slate-400 dark:text-slate-400">@kgpian.iitkgp.ac.in</strong> emails are allowed.
+            <p className="text-[10px] text-center text-slate-500">
+              Only <strong className="text-slate-400">@kgpian.iitkgp.ac.in</strong> emails are allowed.
             </p>
           </div>
         )}
@@ -197,22 +186,22 @@ export default function Login() {
         {/* CREATE ACCOUNT TAB */}
         {tab === 'signup' && (
           <div className="space-y-5">
-            <div className="p-4 bg-emerald-500/5 border border-emerald-500/10 rounded-3xl">
-              <p className="text-xs text-slate-700 dark:text-slate-300 font-semibold mb-0.5">New here? Welcome!</p>
-              <p className="text-xxs text-slate-600 dark:text-slate-400 leading-relaxed">Create your account with your IIT KGP Google account. WhatsApp is required so others can contact you about matches.</p>
+            <div className="p-4 bg-emerald-500/5 border border-emerald-500/10 rounded-xl">
+              <p className="text-xs text-white font-semibold mb-0.5">New here? Welcome!</p>
+              <p className="text-[11px] text-slate-400 leading-relaxed">Create your account with your IIT KGP Google account. WhatsApp is required so others can contact you about matches.</p>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 dark:text-slate-400 mb-2">
+              <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2">
                 WhatsApp Number <span className="text-red-400">*</span>
               </label>
               <div className="relative">
-                <MessageSquare className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 dark:text-slate-400" />
+                <MessageSquare className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                 <input type="tel" placeholder="e.g. 9876543210" value={whatsapp}
                   onChange={(e) => handleWhatsappChange(e.target.value)}
-                  className={inputClass.replace('focus:ring-blue-500/50', 'focus:ring-emerald-500/50')} />
+                  className={inputClass.replace('focus:border-blue-500/40', 'focus:border-emerald-500/40').replace('focus:ring-blue-500/20', 'focus:ring-emerald-500/20')} />
               </div>
-              <p className="text-xxs text-slate-600 dark:text-slate-400 mt-1.5">Required so matches can reach you directly.</p>
+              <p className="text-[10px] text-slate-500 mt-1.5">Required so matches can reach you directly.</p>
             </div>
 
             {isValidWhatsapp(whatsapp) ? (
@@ -222,12 +211,12 @@ export default function Login() {
                 disabled={signingIn}
               />
             ) : (
-              <div className="w-full text-xs font-semibold text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-900/40 px-6 py-3 rounded-xl border border-slate-200 dark:border-slate-800 text-center">
+              <div className="w-full text-xs font-semibold text-slate-400 bg-white/[0.02] px-6 py-3 rounded-xl border border-white/[0.06] text-center">
                 Enter your 10-digit WhatsApp number first
               </div>
             )}
-            <p className="text-xxs text-center text-slate-600 dark:text-slate-400">
-              Only <strong className="text-slate-600 dark:text-slate-400 dark:text-slate-400">@kgpian.iitkgp.ac.in</strong> emails are allowed.
+            <p className="text-[10px] text-center text-slate-500">
+              Only <strong className="text-slate-400">@kgpian.iitkgp.ac.in</strong> emails are allowed.
             </p>
           </div>
         )}
@@ -236,32 +225,32 @@ export default function Login() {
         {isDev && tab === 'demo' && (
           <form onSubmit={handleDemoSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 dark:text-slate-400 mb-1.5">Full Name</label>
+              <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">Full Name</label>
               <div className="relative">
-                <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 dark:text-slate-400" />
+                <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                 <input type="text" required placeholder="Rahul Verma" value={demoName} onChange={(e) => setDemoName(e.target.value)} className={inputClass} />
               </div>
             </div>
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 dark:text-slate-400 mb-1.5">Mock IIT KGP Email</label>
+              <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">Mock IIT KGP Email</label>
               <div className="relative">
-                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 dark:text-slate-400" />
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                 <input type="email" required placeholder="rahul.verma@iitkgp.ac.in" value={demoEmail} onChange={(e) => setDemoEmail(e.target.value)} className={inputClass} />
               </div>
             </div>
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 dark:text-slate-400 mb-1.5">WhatsApp Number</label>
+              <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">WhatsApp Number</label>
               <div className="relative">
-                <MessageSquare className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 dark:text-slate-400" />
+                <MessageSquare className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                 <input type="tel" required placeholder="9876543210" value={whatsapp} onChange={(e) => handleWhatsappChange(e.target.value)} className={inputClass} />
               </div>
             </div>
-            <button type="submit" className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-emerald-600 hover:from-blue-500 hover:to-emerald-500 text-slate-900 dark:text-white rounded-xl text-sm font-semibold shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer">
+            <button type="submit" className="w-full py-3 bg-gradient-to-r from-blue-600 to-emerald-600 hover:from-blue-500 hover:to-emerald-500 text-white rounded-xl text-sm font-bold shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer">
               Access Demo Account
             </button>
             <div className="flex gap-2 items-center p-3 bg-blue-500/5 border border-blue-500/10 rounded-xl">
               <ShieldAlert className="w-4 h-4 text-blue-400 shrink-0" />
-              <span className="text-xxs text-slate-600 dark:text-slate-400 dark:text-slate-400">Dev-only bypass. Hidden in production.</span>
+              <span className="text-[10px] text-slate-400">Dev-only bypass. Hidden in production.</span>
             </div>
           </form>
         )}

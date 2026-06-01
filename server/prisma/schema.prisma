@@ -7,17 +7,28 @@ generator client {
   previewFeatures = ["driverAdapters"]
 }
 
+// ─── User ──────────────────────────────────────────────
 model User {
-  id              String   @id @default(uuid())
-  googleId        String   @unique
-  email           String   @unique
-  name            String
-  whatsappNumber  String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  items           Item[]
+  id                   String   @id @default(uuid())
+  googleId             String   @unique
+  email                String   @unique
+  name                 String
+  whatsappNumber       String?
+  showNamePublicly     Boolean  @default(false)
+  showWhatsappPublicly Boolean  @default(false)
+  trustScore           Int      @default(0)
+  isBanned             Boolean  @default(false)
+  reportCount          Int      @default(0)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  items                Item[]
+  claimsSent           Claim[]        @relation("ClaimantClaims")
+  reportsFiled         Report[]       @relation("ReporterReports")
+  notifications        Notification[]
 }
 
+// ─── Item ──────────────────────────────────────────────
 enum ItemType {
   LOST
   FOUND
@@ -28,24 +39,40 @@ enum ItemStatus {
   RESOLVED
 }
 
-model Item {
-  id               String     @id @default(uuid())
-  userId           String
-  type             ItemType
-  title            String
-  description      String
-  location         String
-  identifyingMarks String?
-  imageUrl         String?
-  status           ItemStatus @default(ACTIVE)
-  createdAt        DateTime   @default(now())
-  updatedAt        DateTime   @updatedAt
-
-  user             User       @relation(fields: [userId], references: [id])
-  lostMatches      Match[]    @relation("LostMatches")
-  foundMatches     Match[]    @relation("FoundMatches")
+enum Urgency {
+  NORMAL
+  URGENT
 }
 
+model Item {
+  id                 String     @id @default(uuid())
+  userId             String
+  type               ItemType
+  title              String
+  description        String
+  location           String
+  category           String?
+  color              String?
+  brand              String?
+  dateOccurred       DateTime?
+  identifyingMarks   String?
+  imageUrl           String?
+  sensitiveImage     Boolean    @default(false)
+  showPosterName     Boolean    @default(false)
+  showPosterWhatsapp Boolean    @default(false)
+  urgency            Urgency    @default(NORMAL)
+  reward             String?
+  status             ItemStatus @default(ACTIVE)
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+
+  user               User       @relation(fields: [userId], references: [id])
+  claims             Claim[]
+  lostMatches        Match[]    @relation("LostMatches")
+  foundMatches       Match[]    @relation("FoundMatches")
+}
+
+// ─── Match ─────────────────────────────────────────────
 enum MatchStatus {
   PENDING
   NOTIFIED
@@ -61,4 +88,60 @@ model Match {
 
   lostItem     Item        @relation("LostMatches", fields: [lostItemId], references: [id])
   foundItem    Item        @relation("FoundMatches", fields: [foundItemId], references: [id])
+}
+
+// ─── Claim (verification flow) ─────────────────────────
+enum ClaimStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  MORE_INFO
+}
+
+model Claim {
+  id              String      @id @default(uuid())
+  itemId          String
+  claimantId      String
+  identifyingInfo String
+  status          ClaimStatus @default(PENDING)
+  responseNote    String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  item            Item        @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  claimant        User        @relation("ClaimantClaims", fields: [claimantId], references: [id], onDelete: Cascade)
+}
+
+// ─── Report (content moderation) ───────────────────────
+enum ReportStatus {
+  PENDING
+  REVIEWED
+  DISMISSED
+}
+
+model Report {
+  id          String       @id @default(uuid())
+  reporterId  String
+  targetType  String       // 'ITEM' | 'USER' | 'CLAIM'
+  targetId    String
+  reason      String
+  details     String?
+  status      ReportStatus @default(PENDING)
+  createdAt   DateTime     @default(now())
+
+  reporter    User         @relation("ReporterReports", fields: [reporterId], references: [id], onDelete: Cascade)
+}
+
+// ─── Notification ──────────────────────────────────────
+model Notification {
+  id         String   @id @default(uuid())
+  userId     String
+  type       String   // MATCH | CLAIM_RECEIVED | CLAIM_ACCEPTED | CLAIM_REJECTED | CLAIM_MORE_INFO | CONTACT_UNLOCKED | ADMIN_ACTION
+  title      String
+  message    String
+  relatedId  String?
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

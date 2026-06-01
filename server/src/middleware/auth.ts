@@ -33,6 +33,12 @@ export const authenticateUser = async (req: Request, res: Response, next: NextFu
     const token = authHeader.split(' ')[1];
     const decoded = jwt.verify(token, JWT_SECRET) as { id: string; email: string };
 
+    // Check if user is banned
+    const dbUser = await prisma.user.findUnique({ where: { id: decoded.id }, select: { isBanned: true } });
+    if (dbUser?.isBanned) {
+      return res.status(403).json({ error: 'Your account has been suspended. Contact admin for details.' });
+    }
+
     req.user = {
       id: decoded.id,
       email: decoded.email,

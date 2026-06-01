@@ -5,12 +5,12 @@ import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import authRoutes from './routes/auth';
 import itemRoutes from './routes/items';
+import claimRoutes from './routes/claims';
+import reportRoutes from './routes/reports';
 import notificationRoutes from './routes/notifications';
 import adminRoutes from './routes/admin';
 
 dotenv.config();
-
-// Uploads are now handled via Cloudinary, no local filesystem needed
 
 const app = express();
 
@@ -51,6 +51,8 @@ app.get('/health', (req, res) => {
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/items', itemRoutes);
+app.use('/api/claims', claimRoutes);
+app.use('/api/reports', reportRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/admin', adminRoutes);
 

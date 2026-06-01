@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { api } from '../services/api';
+import { trackLogin, trackLogout } from '../utils/analytics';
 
 const AuthContext = createContext(null);
 
@@ -24,6 +25,7 @@ export const AuthProvider = ({ children }) => {
       setUser(userData);
       localStorage.setItem('kgp_user', JSON.stringify(userData));
       if (token) localStorage.setItem('kgp_token', token);
+      trackLogin('google', userData.email);
       return userData;
     } catch (error) {
       console.error("Login Error:", error);
@@ -37,6 +39,7 @@ export const AuthProvider = ({ children }) => {
       setUser(userData);
       localStorage.setItem('kgp_user', JSON.stringify(userData));
       if (token) localStorage.setItem('kgp_token', token);
+      trackLogin('mock', userData.email);
       return userData;
     } catch (error) {
       console.error("Mock Login Error:", error);
@@ -45,6 +48,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
+    trackLogout();
     setUser(null);
     localStorage.removeItem('kgp_user');
     localStorage.removeItem('kgp_token');

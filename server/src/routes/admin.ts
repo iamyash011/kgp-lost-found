@@ -7,18 +7,20 @@ const router = Router();
 // All routes protected by requireAdmin middleware
 router.use(requireAdmin);
 
-// GET /api/admin/stats - Platform analytics
+// ─── GET /api/admin/stats — Enhanced analytics ────────
 router.get('/stats', async (req: Request, res: Response) => {
   try {
-    const [totalUsers, totalItems, activeItems, resolvedItems, totalMatches] = await Promise.all([
+    const [totalUsers, totalItems, activeItems, resolvedItems, totalMatches, totalClaims, pendingReports, bannedUsers] = await Promise.all([
       prisma.user.count(),
       prisma.item.count(),
       prisma.item.count({ where: { status: 'ACTIVE' } }),
       prisma.item.count({ where: { status: 'RESOLVED' } }),
       prisma.match.count(),
+      prisma.claim.count(),
+      prisma.report.count({ where: { status: 'PENDING' } }),
+      prisma.user.count({ where: { isBanned: true } }),
     ]);
 
-    // Items created per day over the last 14 days
     const twoWeeksAgo = new Date();
     twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
     const recentItems = await prisma.item.findMany({
@@ -27,18 +29,25 @@ router.get('/stats', async (req: Request, res: Response) => {
       orderBy: { createdAt: 'asc' },
     });
 
-    res.json({ totalUsers, totalItems, activeItems, resolvedItems, totalMatches, recentItems });
+    const acceptedClaims = await prisma.claim.count({ where: { status: 'ACCEPTED' } });
+
+    res.json({
+      totalUsers, totalItems, activeItems, resolvedItems,
+      totalMatches, totalClaims, acceptedClaims, pendingReports, bannedUsers,
+      recentItems,
+    });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch stats' });
   }
 });
 
-// GET /api/admin/items - All items with user info
+// ─── GET /api/admin/items — All items with full user info ──
 router.get('/items', async (req: Request, res: Response) => {
   try {
     const items = await prisma.item.findMany({
       include: {
-        user: { select: { name: true, email: true, whatsappNumber: true } },
+        user: { select: { name: true, email: true, whatsappNumber: true, trustScore: true, isBanned: true } },
+        _count: { select: { claims: true } },
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -48,7 +57,7 @@ router.get('/items', async (req: Request, res: Response) => {
   }
 });
 
-// DELETE /api/admin/items/:id - Force delete any item
+// ─── DELETE /api/admin/items/:id — Force delete any item ──
 router.delete('/items/:id', async (req: Request, res: Response) => {
   try {
     const itemId = req.params['id'] as string;
@@ -69,19 +78,32 @@ router.delete('/items/:id', async (req: Request, res: Response) => {
       } catch (_) {}
     }
 
-    // Delete associated matches first to avoid FK violations
+    // Delete associated data
+    await prisma.claim.deleteMany({ where: { itemId } });
     await prisma.match.deleteMany({
       where: { OR: [{ lostItemId: itemId }, { foundItemId: itemId }] },
     });
 
     await prisma.item.delete({ where: { id: itemId } });
+
+    // Notify the item owner
+    await prisma.notification.create({
+      data: {
+        userId: item.userId,
+        type: 'ADMIN_ACTION',
+        title: 'Item Removed by Admin',
+        message: `Your post "${item.title}" has been removed by an administrator for policy violations.`,
+        relatedId: itemId,
+      },
+    });
+
     res.json({ message: 'Item deleted by admin.' });
   } catch (error) {
     res.status(500).json({ error: 'Failed to delete item' });
   }
 });
 
-// PATCH /api/admin/items/:id/resolve - Force resolve any item
+// ─── PATCH /api/admin/items/:id/resolve ────────────────
 router.patch('/items/:id/resolve', async (req: Request, res: Response) => {
   try {
     const updated = await prisma.item.update({
@@ -94,12 +116,12 @@ router.patch('/items/:id/resolve', async (req: Request, res: Response) => {
   }
 });
 
-// GET /api/admin/users - All users
+// ─── GET /api/admin/users — All users with enhanced info ──
 router.get('/users', async (req: Request, res: Response) => {
   try {
     const users = await prisma.user.findMany({
       include: {
-        _count: { select: { items: true } },
+        _count: { select: { items: true, claimsSent: true } },
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -109,7 +131,37 @@ router.get('/users', async (req: Request, res: Response) => {
   }
 });
 
-// DELETE /api/admin/users/:id - Remove a user and all their data
+// ─── PATCH /api/admin/users/:id/ban — Toggle ban status ──
+router.patch('/users/:id/ban', async (req: Request, res: Response) => {
+  try {
+    const userId = req.params['id'] as string;
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    const updated = await prisma.user.update({
+      where: { id: userId },
+      data: { isBanned: !user.isBanned },
+    });
+
+    // Notify the user
+    await prisma.notification.create({
+      data: {
+        userId,
+        type: 'ADMIN_ACTION',
+        title: updated.isBanned ? 'Account Suspended' : 'Account Reinstated',
+        message: updated.isBanned
+          ? 'Your account has been suspended due to policy violations. Contact admin for details.'
+          : 'Your account has been reinstated. You can now use all features.',
+      },
+    });
+
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update ban status' });
+  }
+});
+
+// ─── DELETE /api/admin/users/:id — Remove user and data ──
 router.delete('/users/:id', async (req: Request, res: Response) => {
   try {
     const userId = req.params['id'] as string;
@@ -117,12 +169,22 @@ router.delete('/users/:id', async (req: Request, res: Response) => {
     // Get all items from this user
     const userItems = await prisma.item.findMany({ where: { userId } });
 
-    // Delete all matches for this user's items
+    // Delete all claims and matches for this user's items
     for (const item of userItems) {
+      await prisma.claim.deleteMany({ where: { itemId: item.id } });
       await prisma.match.deleteMany({
         where: { OR: [{ lostItemId: item.id }, { foundItemId: item.id }] },
       });
     }
+
+    // Delete claims sent by this user
+    await prisma.claim.deleteMany({ where: { claimantId: userId } });
+
+    // Delete reports filed by this user
+    await prisma.report.deleteMany({ where: { reporterId: userId } });
+
+    // Delete notifications
+    await prisma.notification.deleteMany({ where: { userId } });
 
     // Delete all items
     await prisma.item.deleteMany({ where: { userId } });
@@ -133,6 +195,51 @@ router.delete('/users/:id', async (req: Request, res: Response) => {
     res.json({ message: 'User and all associated data deleted.' });
   } catch (error) {
     res.status(500).json({ error: 'Failed to delete user' });
+  }
+});
+
+// ─── GET /api/admin/reports — All content reports ─────
+router.get('/reports', async (req: Request, res: Response) => {
+  try {
+    const reports = await prisma.report.findMany({
+      include: {
+        reporter: { select: { name: true, email: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    res.json(reports);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch reports' });
+  }
+});
+
+// ─── PATCH /api/admin/reports/:id — Review/dismiss report ──
+router.patch('/reports/:id', async (req: Request, res: Response) => {
+  const { status } = req.body; // 'REVIEWED' or 'DISMISSED'
+  try {
+    const updated = await prisma.report.update({
+      where: { id: req.params['id'] as string },
+      data: { status: status || 'REVIEWED' },
+    });
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update report' });
+  }
+});
+
+// ─── GET /api/admin/claims — All claims for moderation ──
+router.get('/claims', async (req: Request, res: Response) => {
+  try {
+    const claims = await prisma.claim.findMany({
+      include: {
+        item: { select: { title: true, type: true, userId: true } },
+        claimant: { select: { name: true, email: true, trustScore: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    res.json(claims);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch claims' });
   }
 });
 

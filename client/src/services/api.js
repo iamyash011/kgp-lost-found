@@ -227,6 +227,7 @@ export const api = {
   // ─── Admin ─────────────────────────────────────────────
   adminFetch: async (path, options = {}) => {
     const res = await fetch(`${API_URL}/api/admin${path}`, {
+      cache: 'no-store',
       ...options,
       headers: getAuthHeaders(options.headers || {}),
     });

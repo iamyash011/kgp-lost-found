@@ -73,9 +73,12 @@ export default function AdminDashboard() {
 
   const handleBanUser = async (id) => {
     try {
-      await api.adminFetch(`/users/${id}/ban`, { method: 'PATCH' });
-      fetchAll();
-    } catch (err) { alert('Failed.'); }
+      const updatedUser = await api.adminFetch(`/users/${id}/ban`, { method: 'PATCH' });
+      setUsers(prev => prev.map(u => u.id === id ? { ...u, isBanned: updatedUser.isBanned } : u));
+    } catch (err) {
+      console.error('Ban error:', err);
+      alert('Failed: ' + err.message);
+    }
   };
 
   const handleDeleteUser = async (id) => {

@@ -157,7 +157,8 @@ router.patch('/users/:id/ban', async (req: Request, res: Response) => {
 
     res.json(updated);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to update ban status' });
+    console.error('BAN ERROR:', error);
+    res.status(500).json({ error: 'Failed to update ban status', details: error.message });
   }
 });
 

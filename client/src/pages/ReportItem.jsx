@@ -251,7 +251,7 @@ export default function ReportItem() {
                 <div className="absolute top-full left-0 right-0 mt-1 bg-[#0f1729] border border-white/10 rounded-xl shadow-xl overflow-hidden z-30">
                   <ul className="max-h-48 overflow-y-auto">
                     {titleSuggestions.map((t) => (
-                      <li key={t} onClick={() => { setFormData(prev => ({ ...prev, title: t })); setShowTitleSuggestions(false); }}
+                      <li key={t} onMouseDown={(e) => { e.preventDefault(); setFormData(prev => ({ ...prev, title: t })); setShowTitleSuggestions(false); }}
                         className="px-4 py-2.5 text-xs text-slate-300 hover:bg-white/5 cursor-pointer font-medium transition-colors">{t}</li>
                     ))}
                   </ul>
@@ -265,16 +265,16 @@ export default function ReportItem() {
                 <label className={labelClass}>Category</label>
                 <select name="category" value={formData.category} onChange={handleChange}
                   className={`${inputClass} appearance-none cursor-pointer`}>
-                  <option value="">Select category...</option>
-                  {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                  <option value="" className="bg-[#0f1729] text-white">Select category...</option>
+                  {CATEGORIES.map(c => <option key={c} value={c} className="bg-[#0f1729] text-white">{c}</option>)}
                 </select>
               </div>
               <div>
                 <label className={labelClass}>Color</label>
                 <select name="color" value={formData.color} onChange={handleChange}
                   className={`${inputClass} appearance-none cursor-pointer`}>
-                  <option value="">Select color...</option>
-                  {COLORS.map(c => <option key={c} value={c}>{c}</option>)}
+                  <option value="" className="bg-[#0f1729] text-white">Select color...</option>
+                  {COLORS.map(c => <option key={c} value={c} className="bg-[#0f1729] text-white">{c}</option>)}
                 </select>
               </div>
             </div>
@@ -317,7 +317,7 @@ export default function ReportItem() {
                   <div className="absolute top-full left-0 right-0 mt-1 bg-[#0f1729] border border-white/10 rounded-xl shadow-xl overflow-hidden z-30">
                     <ul className="max-h-48 overflow-y-auto">
                       {locationSuggestions.map((loc) => (
-                        <li key={loc} onClick={() => { setFormData(prev => ({ ...prev, location: loc })); setShowLocSuggestions(false); }}
+                        <li key={loc} onMouseDown={(e) => { e.preventDefault(); setFormData(prev => ({ ...prev, location: loc })); setShowLocSuggestions(false); }}
                           className="px-4 py-2.5 text-xs text-slate-300 hover:bg-white/5 cursor-pointer font-medium transition-colors">{loc}</li>
                       ))}
                     </ul>

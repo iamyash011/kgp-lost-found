@@ -153,10 +153,7 @@ export default function Navbar() {
               <PlusCircle className="w-4 h-4" /> Report
             </Link>
 
-            <button onClick={toggleTheme}
-              className="p-2.5 text-slate-500 hover:text-white hover:bg-white/[0.04] rounded-xl transition-colors" aria-label="Toggle Theme">
-              {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            </button>
+
 
             {user ? (
               <div className="flex items-center gap-3 relative" ref={notifRef}>
@@ -262,9 +259,7 @@ export default function Navbar() {
 
           {/* Mobile hamburger */}
           <div className="md:hidden flex items-center gap-3">
-            <button onClick={toggleTheme} className="p-1.5 text-slate-500">
-              {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-            </button>
+
             {user && (
               <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-500 to-emerald-500 flex items-center justify-center text-xs font-black text-white shadow-sm">
                 {user.name.charAt(0).toUpperCase()}

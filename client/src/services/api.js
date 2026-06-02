@@ -89,7 +89,10 @@ export const api = {
       headers: isFormData ? getFormDataHeaders() : getAuthHeaders(),
       body: isFormData ? itemData : JSON.stringify(itemData),
     });
-    if (!res.ok) throw new Error('Failed to create item');
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.error || 'Failed to create item');
+    }
     return res.json();
   },
 

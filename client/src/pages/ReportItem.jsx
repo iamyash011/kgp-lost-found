@@ -134,7 +134,7 @@ export default function ReportItem() {
       navigate('/');
     } catch (err) {
       console.error('Failed to create item', err);
-      setError('Failed to submit report. Please verify image sizes and try again.');
+      setError(err.message || 'Failed to submit report. Please verify image sizes and try again.');
     } finally {
       setLoading(false);
     }
@@ -218,7 +218,9 @@ export default function ReportItem() {
                     </button>
                   </div>
                   <div className="absolute bottom-1.5 left-1.5 bg-black/70 backdrop-blur-sm px-1.5 py-0.5 rounded text-[9px] text-slate-300 font-medium">
-                    {(item.file.size / (1024 * 1024)).toFixed(1)} MB
+                    {item.file.size < 1024 * 1024 
+                      ? `${(item.file.size / 1024).toFixed(0)} KB` 
+                      : `${(item.file.size / (1024 * 1024)).toFixed(1)} MB`}
                   </div>
                 </div>
               ))}

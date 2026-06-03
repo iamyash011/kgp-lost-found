@@ -179,9 +179,9 @@ router.post('/', authenticateUser, (req: Request, res: Response, next) => {
       await findAndStoreMatches(newItem);
 
       res.status(201).json(newItem);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to create item:', error);
-      res.status(500).json({ error: 'Failed to create item' });
+      res.status(500).json({ error: `Server error: ${error.message || 'Unknown error'}` });
     }
   });
 });

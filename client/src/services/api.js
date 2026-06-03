@@ -91,7 +91,7 @@ export const api = {
     });
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      throw new Error(data.error || 'Failed to create item');
+      throw new Error(data.error || `Failed to create item (HTTP ${res.status})`);
     }
     return res.json();
   },

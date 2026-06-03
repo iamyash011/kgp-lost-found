@@ -116,9 +116,12 @@ router.get('/:id/matches', authenticateUser, async (req: Request, res: Response)
 
 // ─── POST /api/items — Create item with new fields ────
 router.post('/', authenticateUser, (req: Request, res: Response, next) => {
-  upload.array('images', 3)(req, res, async (err) => {
+  upload.array('images', 3)(req, res, async (err: any) => {
     if (err) {
-      return res.status(400).json({ error: err.message });
+      if (err.message && err.message.toLowerCase().includes('moderation')) {
+        return res.status(400).json({ error: 'Image rejected: Contains inappropriate or explicit content.' });
+      }
+      return res.status(400).json({ error: err.message || 'Image upload failed' });
     }
 
     const userId = req.user!.id;

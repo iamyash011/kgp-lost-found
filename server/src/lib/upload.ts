@@ -15,6 +15,7 @@ const storage = new CloudinaryStorage({
       folder: 'kgp_lost_found',
       allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
       public_id: file.fieldname + '-' + Date.now(),
+      moderation: 'aws_rek'
     };
   }
 });

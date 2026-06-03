@@ -11,7 +11,7 @@ export default function ClaimModal({ item, onClose, onSuccess }) {
   const isLost = item.type === 'LOST';
 
   const handleSubmit = async () => {
-    if (identifyingInfo.trim().length < 10) {
+    if (!isLost && identifyingInfo.trim().length < 10) {
       setError('Please provide at least 10 characters of identifying details.');
       return;
     }
@@ -93,7 +93,7 @@ export default function ClaimModal({ item, onClose, onSuccess }) {
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
                   {isLost
-                    ? 'How do you know this is the item you found?'
+                    ? 'Message to the owner (Optional)'
                     : 'Prove this item is yours'
                   }
                 </label>
@@ -109,8 +109,10 @@ export default function ClaimModal({ item, onClose, onSuccess }) {
                   className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-blue-500/40 focus:ring-1 focus:ring-blue-500/20 transition-all resize-none leading-relaxed"
                 />
                 <div className="flex justify-between items-center mt-1.5">
-                  <span className="text-[10px] text-slate-600">Minimum 10 characters</span>
-                  <span className={`text-[10px] font-medium ${identifyingInfo.length >= 10 ? 'text-emerald-400' : 'text-slate-600'}`}>
+                  <span className="text-[10px] text-slate-600">
+                    {isLost ? 'Optional' : 'Minimum 10 characters'}
+                  </span>
+                  <span className={`text-[10px] font-medium ${(isLost || identifyingInfo.length >= 10) ? 'text-emerald-400' : 'text-slate-600'}`}>
                     {identifyingInfo.length}/500
                   </span>
                 </div>
@@ -131,7 +133,7 @@ export default function ClaimModal({ item, onClose, onSuccess }) {
 
               <button
                 onClick={handleSubmit}
-                disabled={loading || identifyingInfo.trim().length < 10}
+                disabled={loading || (!isLost && identifyingInfo.trim().length < 10)}
                 className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:hover:bg-blue-600 text-white font-bold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]"
               >
                 {loading ? (

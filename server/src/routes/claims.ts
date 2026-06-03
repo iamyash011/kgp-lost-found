@@ -12,10 +12,8 @@ router.post('/', async (req: Request, res: Response) => {
   const { itemId, identifyingInfo } = req.body;
   const claimantId = req.user!.id;
 
-  if (!itemId || !identifyingInfo || identifyingInfo.trim().length < 10) {
-    return res.status(400).json({
-      error: 'Please provide at least 10 characters of identifying information.',
-    });
+  if (!itemId) {
+    return res.status(400).json({ error: 'Item ID is required.' });
   }
 
   try {
@@ -26,6 +24,17 @@ router.post('/', async (req: Request, res: Response) => {
     });
     if (!item) return res.status(404).json({ error: 'Item not found' });
     if (item.status !== 'ACTIVE') return res.status(400).json({ error: 'This item has already been resolved.' });
+
+    const infoString = identifyingInfo ? identifyingInfo.trim() : '';
+    if (item.type === 'FOUND' && infoString.length < 10) {
+      return res.status(400).json({
+        error: 'Please provide at least 10 characters of identifying information.',
+      });
+    }
+
+    const finalInfo = infoString.length > 0 
+      ? infoString 
+      : 'I have found your item and would like to return it.';
 
     // Can't claim your own item
     if (item.userId === claimantId) {
@@ -51,7 +60,7 @@ router.post('/', async (req: Request, res: Response) => {
     }
 
     const claim = await prisma.claim.create({
-      data: { itemId, claimantId, identifyingInfo: identifyingInfo.trim() },
+      data: { itemId, claimantId, identifyingInfo: finalInfo },
     });
 
     // Notify item owner

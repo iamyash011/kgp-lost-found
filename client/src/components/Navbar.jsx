@@ -113,9 +113,9 @@ export default function Navbar() {
 
   return (
     <nav className="navbar-container">
-      <Link to="/" className="navbar-logo">
-        <div className="navbar-logo-dot" />
-        KGP Find
+      <Link to="/" className="navbar-logo" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <img src="/logo.png" alt="KGP Find Logo" style={{ height: '32px', width: '32px', objectFit: 'contain', borderRadius: '6px' }} />
+        <span>KGP Find</span>
       </Link>
 
       <div className="navbar-search">

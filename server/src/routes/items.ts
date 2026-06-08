@@ -33,7 +33,7 @@ router.get('/', optionalAuth, async (req: Request, res: Response) => {
       return {
         ...item,
         user: {
-          id: item.user.id,
+          id: (isOwner || isAdmin || item.showPosterName) ? item.user.id : null,
           name: (isOwner || isAdmin || item.showPosterName) ? item.user.name : null,
           whatsappNumber: (isOwner || isAdmin || item.showPosterWhatsapp) ? item.user.whatsappNumber : null,
           email: (isOwner || isAdmin) ? item.user.email : null,
@@ -66,7 +66,7 @@ router.get('/:id', optionalAuth, async (req: Request, res: Response) => {
     const sanitized = {
       ...item,
       user: {
-        id: item.user.id,
+        id: (isOwner || isAdmin || item.showPosterName) ? item.user.id : null,
         name: (isOwner || isAdmin || item.showPosterName) ? item.user.name : null,
         whatsappNumber: (isOwner || isAdmin || item.showPosterWhatsapp) ? item.user.whatsappNumber : null,
         trustScore: item.user.trustScore,
@@ -115,6 +115,7 @@ router.get('/:id/matches', authenticateUser, async (req: Request, res: Response)
         ...match.lostItem,
         user: {
           ...match.lostItem.user,
+          id: (req.user?.id === match.lostItem.userId || req.user?.isAdmin || match.lostItem.showPosterName) ? match.lostItem.user.id : null,
           name: match.lostItem.showPosterName ? match.lostItem.user.name : null
         }
       },
@@ -122,6 +123,7 @@ router.get('/:id/matches', authenticateUser, async (req: Request, res: Response)
         ...match.foundItem,
         user: {
           ...match.foundItem.user,
+          id: (req.user?.id === match.foundItem.userId || req.user?.isAdmin || match.foundItem.showPosterName) ? match.foundItem.user.id : null,
           name: match.foundItem.showPosterName ? match.foundItem.user.name : null
         }
       }

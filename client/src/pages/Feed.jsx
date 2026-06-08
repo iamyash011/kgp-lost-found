@@ -394,7 +394,7 @@ export default function Feed() {
       )}
 
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+      <div className="feed-header">
         <div>
           <h1 className="font-heading" style={{ fontSize: '24px', fontWeight: 'bold', margin: '0 0 4px 0' }}>
             Recent Activity

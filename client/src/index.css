@@ -445,3 +445,54 @@ h1, h2, h3, h4, h5, h6, .font-heading {
   text-decoration: none;
   cursor: pointer;
 }
+
+/* --- Mobile Menu & Header --- */
+.mobile-menu-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mobile-menu-container {
+  background-color: var(--bg-surface);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.feed-header {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  gap: 16px;
+}
+
+/* --- Responsiveness (Media Queries) --- */
+@media (max-width: 767px) {
+  .page-container {
+    padding: 16px;
+  }
+  
+  .navbar-search, .navbar-actions {
+    display: none !important; /* Hide desktop elements on mobile */
+  }
+  
+  .navbar-container {
+    padding: 0 16px;
+  }
+}
+
+@media (min-width: 768px) {
+  .mobile-menu-btn {
+    display: none !important; /* Hide mobile elements on desktop */
+  }
+  
+  .mobile-menu-container {
+    display: none !important;
+  }
+  
+  .feed-header {
+    flex-direction: row;
+    align-items: center;
+  }
+}

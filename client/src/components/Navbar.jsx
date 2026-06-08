@@ -118,7 +118,7 @@ export default function Navbar() {
         KGP Find
       </Link>
 
-      <div className="navbar-search hidden md:flex">
+      <div className="navbar-search">
         <Search className="w-4 h-4 text-slate-400" />
         <input 
           type="text" 
@@ -133,7 +133,7 @@ export default function Navbar() {
         )}
       </div>
 
-      <div className="navbar-actions hidden md:flex items-center gap-3">
+      <div className="navbar-actions">
         {isAdmin && (
           <Link to="/admin" style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--accent-blue)', textDecoration: 'none' }}>
             <Shield className="w-4 h-4 inline mr-1" /> Admin
@@ -232,7 +232,7 @@ export default function Navbar() {
       </div>
 
       {/* Mobile hamburger */}
-      <div className="md:hidden flex items-center gap-3">
+      <div className="mobile-menu-btn">
         <button onClick={toggleTheme} className="theme-toggle" aria-label="Toggle dark mode">
           {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
         </button>
@@ -248,7 +248,7 @@ export default function Navbar() {
 
       {/* Mobile Menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden bg-[#080e1a] border-b border-white/[0.06]">
+        <div className="mobile-menu-container">
           <div className="px-4 pt-2 pb-4 space-y-3">
             <div className="relative">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />

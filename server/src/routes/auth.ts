@@ -164,8 +164,13 @@ router.post('/mock-login', async (req: Request, res: Response) => {
 
 
 // GET /api/auth/me/:userId - Get current user profile
-router.get('/me/:userId', async (req: Request, res: Response) => {
+router.get('/me/:userId', authenticateUser, async (req: Request, res: Response) => {
   try {
+    // IDOR Protection: Users can only fetch their own complete profile
+    if (req.user!.id !== req.params['userId']) {
+      return res.status(403).json({ error: 'Forbidden: You can only view your own profile.' });
+    }
+
     const user = await prisma.user.findUnique({
       where: { id: req.params['userId'] as string },
       select: { id: true, name: true, email: true, whatsappNumber: true, createdAt: true },

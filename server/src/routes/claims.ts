@@ -149,6 +149,11 @@ router.patch('/:id/accept', async (req: Request, res: Response) => {
     });
     if (!claim) return res.status(404).json({ error: 'Claim not found' });
 
+    // Infinite Trust Score Protection
+    if (claim.status === 'ACCEPTED') {
+      return res.status(400).json({ error: 'This claim has already been accepted.' });
+    }
+
     // Only item owner can accept
     if (claim.item.userId !== req.user!.id) {
       return res.status(403).json({ error: 'Only the item owner can accept claims.' });
@@ -157,6 +162,12 @@ router.patch('/:id/accept', async (req: Request, res: Response) => {
     const updated = await prisma.claim.update({
       where: { id: claim.id },
       data: { status: 'ACCEPTED' },
+    });
+
+    // Auto-resolve item (Ghost Item Protection)
+    await prisma.item.update({
+      where: { id: claim.itemId },
+      data: { status: 'RESOLVED' },
     });
 
     // Increment trust score for the poster (finder/reporter)

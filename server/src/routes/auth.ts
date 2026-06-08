@@ -103,8 +103,8 @@ router.post('/google', async (req: Request, res: Response) => {
 
 // POST /api/auth/mock-login - Sign in with a mock profile for local development ONLY
 router.post('/mock-login', async (req: Request, res: Response) => {
-  // Hard-block this endpoint in production
-  if (process.env.NODE_ENV === 'production') {
+  // Hard-block this endpoint unless explicitly enabled
+  if (process.env.NODE_ENV === 'production' || process.env.ENABLE_MOCK_LOGIN !== 'true') {
     return res.status(404).json({ error: 'Not found' });
   }
 

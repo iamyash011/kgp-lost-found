@@ -21,6 +21,21 @@ router.post('/', async (req: Request, res: Response) => {
   }
 
   try {
+    // --- Rate Limiting (Anti-Spam) ---
+    const oneHourAgo = new Date();
+    oneHourAgo.setHours(oneHourAgo.getHours() - 1);
+    
+    const recentReportsCount = await prisma.report.count({
+      where: {
+        reporterId,
+        createdAt: { gte: oneHourAgo }
+      }
+    });
+
+    if (recentReportsCount >= 5) {
+      return res.status(429).json({ error: 'You have reached the limit of 5 reports per hour. Please try again later.' });
+    }
+
     // Prevent duplicate reports from same user on same target
     const existing = await prisma.report.findFirst({
       where: { reporterId, targetType, targetId, status: 'PENDING' },

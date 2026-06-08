@@ -142,6 +142,21 @@ router.post('/', authenticateUser, (req: Request, res: Response, next) => {
     }
 
     try {
+      // --- Rate Limiting (Anti-Spam) ---
+      const oneHourAgo = new Date();
+      oneHourAgo.setHours(oneHourAgo.getHours() - 1);
+      
+      const recentItemsCount = await prisma.item.count({
+        where: {
+          userId,
+          createdAt: { gte: oneHourAgo }
+        }
+      });
+      
+      if (recentItemsCount >= 5) {
+        return res.status(429).json({ error: 'You have reached the limit of 5 items per hour. Please try again later.' });
+      }
+
       let images: string[] = [];
       if (req.files && Array.isArray(req.files)) {
         images = (req.files as Express.Multer.File[]).map((file) => file.path);
@@ -421,12 +436,15 @@ function extractKeywords(text: string): string[] {
     'i', 'me', 'we', 'us', 'you', 'he', 'she', 'they', 'them',
   ]);
 
-  return [...new Set(
+  const keywords = [...new Set(
     text.toLowerCase()
       .replace(/[^a-z0-9\s]/g, ' ')
       .split(/\s+/)
       .filter(w => w.length > 2 && !stopWords.has(w))
   )];
+  
+  // Limit to maximum 30 keywords to prevent Dictionary Attack matching
+  return keywords.slice(0, 30);
 }
 
 export default router;

@@ -332,15 +332,6 @@ export default function Feed() {
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState(null);
 
-  useEffect(() => {
-    fetchItems();
-  }, []);
-
-  const triggerToast = (message, type = 'success') => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 4000);
-  };
-
   const fetchItems = async () => {
     setLoading(true);
     try {
@@ -352,6 +343,15 @@ export default function Feed() {
     } finally {
       setLoading(false);
     }
+  };
+
+  useEffect(() => {
+    fetchItems();
+  }, []);
+
+  const triggerToast = (message, type = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 4000);
   };
 
   const filteredItems = items.filter((item) => {
@@ -381,83 +381,72 @@ export default function Feed() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative">
+    <div className="page-container relative">
       {/* Toast */}
       {toast && (
         <div className="fixed top-20 right-6 z-50" style={{ animation: 'modalIn 0.2s ease-out' }}>
-          <div className={`flex items-center gap-3 px-5 py-3.5 border rounded-xl shadow-2xl backdrop-blur-xl ${
-            toast.type === 'success' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-300'
-            : toast.type === 'error' ? 'bg-red-500/10 border-red-500/20 text-red-300'
-            : 'bg-blue-500/10 border-blue-500/20 text-blue-300'
-          }`}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 20px', borderRadius: '12px', backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-color)', boxShadow: '0 4px 6px var(--shadow-color)', color: toast.type === 'error' ? 'var(--badge-lost-text)' : 'var(--badge-found-text)' }}>
             {toast.type === 'success' ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <Info className="w-4 h-4 shrink-0" />}
-            <span className="text-xs font-semibold">{toast.message}</span>
-            <button onClick={() => setToast(null)} className="text-slate-500 hover:text-white ml-2"><X className="w-3.5 h-3.5" /></button>
+            <span style={{ fontSize: '14px', fontWeight: '500' }}>{toast.message}</span>
+            <button onClick={() => setToast(null)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}><X className="w-4 h-4" /></button>
           </div>
         </div>
       )}
 
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight font-heading">
+          <h1 className="font-heading" style={{ fontSize: '24px', fontWeight: 'bold', margin: '0 0 4px 0' }}>
             Recent Activity
           </h1>
-          <p className="text-slate-500 mt-1 text-sm">Help your fellow KGPians find their lost belongings.</p>
+          <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '14px' }}>Help your fellow KGPians find their lost belongings.</p>
         </div>
+      </div>
 
-        <div className="flex bg-white/[0.04] p-1 rounded-xl border border-white/[0.06]">
+      <div className="filters-section">
+        <div className="segmented-control">
           {['ALL', 'LOST', 'FOUND'].map((f) => (
             <button key={f}
               onClick={() => { setActiveFilter(f); trackFilterChange('type', f); }}
-              className={`px-4 sm:px-5 py-2 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${
-                activeFilter === f ? 'bg-blue-600 text-white shadow-md' : 'text-slate-500 hover:text-white'
-              }`}>
+              className={`segment-btn ${activeFilter === f ? 'active' : ''}`}>
               {f === 'ALL' ? 'All Items' : f.charAt(0) + f.slice(1).toLowerCase()}
+            </button>
+          ))}
+        </div>
+
+        {/* Category filter pills */}
+        <div className="category-scroll">
+          {CATEGORIES.map((cat) => (
+            <button key={cat}
+              onClick={() => setActiveCategory(cat)}
+              className={`category-chip ${activeCategory === cat ? 'active' : ''}`}>
+              {cat}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Category filter pills */}
-      <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
-        {CATEGORIES.map((cat) => (
-          <button key={cat}
-            onClick={() => setActiveCategory(cat)}
-            className={`px-3 py-1.5 rounded-full text-[10px] font-bold whitespace-nowrap transition-all cursor-pointer border ${
-              activeCategory === cat
-                ? 'bg-blue-500/15 text-blue-300 border-blue-500/20'
-                : 'bg-white/[0.03] text-slate-500 border-white/[0.06] hover:text-slate-300 hover:border-white/10'
-            }`}>
-            {cat}
-          </button>
-        ))}
-      </div>
-
       {/* Search indicator */}
       {searchQuery && (
-        <div className="mb-5 flex items-center gap-2 text-xs font-medium text-slate-400 bg-blue-500/5 border border-blue-500/10 py-2.5 px-4 rounded-xl w-fit">
-          <Search className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-          <span>Showing results for "<span className="text-blue-300 font-bold">{searchQuery}</span>"</span>
+        <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: 'var(--text-secondary)', backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-color)', padding: '8px 16px', borderRadius: '12px', width: 'fit-content' }}>
+          <Search className="w-4 h-4 shrink-0" />
+          <span>Showing results for <span style={{ fontWeight: 'bold', color: 'var(--accent-blue)' }}>"{searchQuery}"</span></span>
           <button onClick={() => {
             const url = new URL(window.location.href);
             url.searchParams.delete('q');
             window.history.pushState({}, '', url.pathname);
             window.dispatchEvent(new Event('popstate'));
-          }} className="ml-2 px-1.5 py-0.5 bg-blue-500/15 hover:bg-blue-500/25 text-blue-300 rounded text-[10px] font-bold">Clear</button>
+          }} style={{ marginLeft: '8px', padding: '4px 8px', background: 'var(--chip-active-bg)', color: 'var(--accent-blue)', borderRadius: '4px', border: 'none', fontSize: '10px', fontWeight: 'bold', cursor: 'pointer' }}>Clear</button>
         </div>
       )}
 
       {/* Grid */}
       {loading ? (
-        <div className="flex justify-center items-center h-64">
-          <div className="relative w-12 h-12">
-            <div className="absolute inset-0 rounded-full border-4 border-white/5" />
-            <div className="absolute inset-0 rounded-full border-4 border-t-blue-500 border-r-transparent border-b-transparent border-l-transparent animate-spin" />
-          </div>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '200px', color: 'var(--text-secondary)' }}>
+          Loading...
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+        <div className="items-grid">
           {filteredItems.map((item) => {
             const isOwner = item.userId === user?.id;
             const images = getImages(item.imageUrl);
@@ -469,100 +458,78 @@ export default function Feed() {
             return (
               <div key={item.id}
                 onClick={() => { setSelectedItem(item); trackItemView(item.id, item.type); }}
-                className="group flex flex-col bg-white/[0.02] border border-white/[0.06] rounded-2xl overflow-hidden hover:border-white/[0.12] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-blue-500/[0.03] cursor-pointer"
+                className="item-card"
+                style={{ cursor: 'pointer' }}
               >
-                <div className="relative h-44 overflow-hidden bg-slate-950">
+                <div className="card-image-area">
                   {displayImg ? (
-                    <img src={displayImg} alt={item.title}
-                      className={`w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500 ${item.sensitiveImage ? 'blur-md' : ''}`} />
+                    <img src={displayImg} alt={item.title} style={{ filter: item.sensitiveImage ? 'blur(8px)' : 'none' }} />
                   ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center text-slate-700">
-                      <ImageIcon className="w-8 h-8 mb-1 opacity-30" strokeWidth={1.5} />
-                      <span className="text-[10px] font-semibold opacity-30">No Image</span>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', color: 'var(--text-metadata)' }}>
+                      <ImageIcon className="w-8 h-8 opacity-30" strokeWidth={1.5} />
                     </div>
                   )}
 
-                  {item.sensitiveImage && displayImg && (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="text-[9px] text-amber-300 font-bold bg-black/50 backdrop-blur-sm px-2 py-1 rounded-lg border border-amber-500/20">🔒 Sensitive</span>
-                    </div>
-                  )}
-
-                  {/* Badges */}
-                  <div className="absolute top-3 left-3 flex gap-1.5">
-                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-extrabold tracking-wider border ${
-                      item.type === 'LOST' ? 'bg-red-500/20 text-red-300 border-red-500/25' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/25'
-                    }`}>{item.type}</span>
-                    {item.urgency === 'URGENT' && (
-                      <span className="px-2 py-0.5 rounded-full text-[9px] font-extrabold tracking-wider bg-orange-500/20 text-orange-300 border border-orange-500/25">🔥</span>
-                    )}
-                  </div>
-
-                  {isOwner && (
-                    <div className="absolute top-3 right-3">
-                      <span className="px-2 py-0.5 rounded-full text-[9px] font-extrabold tracking-wider bg-purple-500/20 text-purple-300 border border-purple-500/25">Yours</span>
-                    </div>
-                  )}
-
+                  <span className={`status-badge ${item.type === 'LOST' ? 'lost' : 'found'}`}>{item.type}</span>
+                  
                   {item.reward && (
-                    <div className="absolute bottom-3 right-3">
-                      <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/25">💰 {item.reward}</span>
+                    <div className="reward-badge">
+                      <span>₹</span> {item.reward}
                     </div>
                   )}
                 </div>
 
-                <div className="p-4 flex flex-col flex-grow">
-                  <h3 className="text-sm font-bold text-white line-clamp-1 group-hover:text-blue-300 transition-colors">
+                <div className="card-body">
+                  <h3 className="card-title">
                     <HighlightText text={item.title} highlight={searchQuery} />
                   </h3>
-                  <p className="text-[11px] text-slate-500 mt-1.5 line-clamp-2 flex-grow leading-relaxed">
+                  <p className="card-desc">
                     <HighlightText text={item.description} highlight={searchQuery} />
                   </p>
 
-                  {/* Category chip */}
                   {item.category && (
-                    <span className="inline-block mt-2 px-2 py-0.5 bg-white/[0.04] border border-white/[0.06] rounded text-[9px] text-slate-500 font-medium w-fit">
+                    <span className="card-tag">
                       {item.category}
                     </span>
                   )}
 
-                  <div className="mt-3 pt-3 border-t border-white/[0.04] flex flex-col gap-1.5">
-                    <div className="flex items-center text-[10px] text-slate-500 font-medium">
-                      <MapPin className="w-3 h-3 mr-1.5 text-blue-400/60 shrink-0" />
-                      <span className="truncate"><HighlightText text={item.location} highlight={searchQuery} /></span>
+                  <div style={{ marginTop: 'auto' }}>
+                    <div className="card-meta-row">
+                      <MapPin />
+                      <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        <HighlightText text={item.location} highlight={searchQuery} />
+                      </span>
                     </div>
-                    <div className="flex items-center text-[10px] text-slate-600">
-                      <Clock className="w-3 h-3 mr-1.5" />
+                    <div className="card-meta-row">
+                      <Clock />
                       <span>{timeAgo(item.createdAt)}</span>
                     </div>
                   </div>
+                </div>
 
-                  <div className="mt-3 pt-2.5 border-t border-white/[0.03] flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-5 h-5 rounded-full bg-gradient-to-tr from-blue-500 to-emerald-500 flex items-center justify-center text-[8px] font-black text-white">
-                        {posterName ? posterName.charAt(0).toUpperCase() : '?'}
-                      </div>
-                      <span className="text-[10px] text-slate-500 font-medium">
-                        {isOwner ? 'You' : (posterName || 'Verified User')}
-                      </span>
-                      <Shield className="w-2.5 h-2.5 text-blue-400/50" />
+                <div className="card-footer">
+                  <div className="card-user">
+                    <div className="card-user-avatar">
+                      {posterName ? posterName.charAt(0).toUpperCase() : '?'}
                     </div>
-                    {!isOwner && user && (
-                      <span className="text-[10px] font-bold text-blue-400/70 flex items-center gap-1">
-                        <Eye className="w-3 h-3" /> View
-                      </span>
-                    )}
+                    <span className="card-user-name">
+                      {isOwner ? 'You' : (posterName || 'Verified User')}
+                    </span>
                   </div>
+                  
+                  <span className="card-view-link">
+                    View →
+                  </span>
                 </div>
               </div>
             );
           })}
 
           {filteredItems.length === 0 && (
-            <div className="col-span-full text-center py-16 text-slate-500 bg-white/[0.02] border border-white/[0.05] rounded-2xl p-8">
-              <AlertCircle className="w-8 h-8 text-slate-700 mx-auto mb-3" />
-              <p className="text-sm font-semibold text-slate-400">No reports found.</p>
-              <p className="text-xs text-slate-600 mt-1">Try resetting your filters or adjusting your search.</p>
+            <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '64px 0', color: 'var(--text-secondary)' }}>
+              <AlertCircle className="w-8 h-8 mx-auto mb-3" style={{ opacity: 0.5 }} />
+              <p style={{ fontSize: '16px', fontWeight: '500' }}>No reports found.</p>
+              <p style={{ fontSize: '12px' }}>Try resetting your filters or adjusting your search.</p>
             </div>
           )}
         </div>
@@ -577,8 +544,6 @@ export default function Feed() {
           from { opacity: 0; transform: scale(0.96) translateY(8px); }
           to   { opacity: 1; transform: scale(1)    translateY(0); }
         }
-        .scrollbar-hide::-webkit-scrollbar { display: none; }
-        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
     </div>
   );

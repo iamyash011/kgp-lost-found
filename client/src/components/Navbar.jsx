@@ -112,165 +112,140 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="sticky top-0 z-50 bg-[#080e1a]/90 backdrop-blur-xl border-b border-white/[0.06] transition-colors duration-300">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16 items-center">
-          <div className="flex items-center">
-            <Link to="/" className="flex items-center gap-2 group">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-emerald-500 rounded-lg flex items-center justify-center text-white shadow-md shadow-blue-500/15 group-hover:scale-105 transition-transform">
-                <Search className="w-4 h-4" strokeWidth={3.5} />
-              </div>
-              <span className="text-lg tracking-wide font-heading font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400">
-                KGP Find
-              </span>
-            </Link>
-          </div>
+    <nav className="navbar-container">
+      <Link to="/" className="navbar-logo">
+        <div className="navbar-logo-dot" />
+        KGP Find
+      </Link>
 
-          {/* Desktop nav */}
-          <div className="hidden md:flex items-center space-x-4">
-            <div className="relative">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-600" />
-              <input type="text" placeholder="Search items, locations..."
-                value={searchVal} onChange={handleSearchChange}
-                className="bg-white/[0.04] text-xs text-white rounded-xl pl-9 pr-4 py-2.5 border border-white/[0.06] focus:outline-none focus:border-blue-500/40 focus:ring-1 focus:ring-blue-500/20 transition-all w-60 placeholder:text-slate-600 font-medium" />
-              {searchVal && (
-                <button onClick={() => { setSearchVal(''); setSearchParams({}); }}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 hover:text-white">
-                  <X className="w-3 h-3" />
-                </button>
+      <div className="navbar-search hidden md:flex">
+        <Search className="w-4 h-4 text-slate-400" />
+        <input 
+          type="text" 
+          placeholder="Search items, locations..."
+          value={searchVal} 
+          onChange={handleSearchChange} 
+        />
+        {searchVal && (
+          <button onClick={() => { setSearchVal(''); setSearchParams({}); }} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}>
+            <X className="w-3 h-3" />
+          </button>
+        )}
+      </div>
+
+      <div className="navbar-actions hidden md:flex items-center gap-3">
+        {isAdmin && (
+          <Link to="/admin" style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--accent-blue)', textDecoration: 'none' }}>
+            <Shield className="w-4 h-4 inline mr-1" /> Admin
+          </Link>
+        )}
+
+        <Link to="/report" className="btn-report">
+          Report
+        </Link>
+
+        <div className="navbar-divider" />
+
+        {user ? (
+          <div className="flex items-center gap-3 relative" ref={notifRef}>
+            <button onClick={() => setShowNotif(!showNotif)} style={{ position: 'relative', background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}>
+              <Bell className="w-5 h-5" />
+              {unreadCount > 0 && (
+                <span style={{ position: 'absolute', top: '-4px', right: '-4px', width: '16px', height: '16px', backgroundColor: '#c5221f', borderRadius: '50%', color: 'white', fontSize: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
               )}
-            </div>
+            </button>
 
-            {isAdmin && (
-              <Link to="/admin"
-                className="flex items-center gap-1.5 text-[10px] font-bold text-amber-300 bg-amber-500/10 hover:bg-amber-500/15 border border-amber-500/15 px-3.5 py-2 rounded-xl transition-colors cursor-pointer">
-                <Shield className="w-3.5 h-3.5" /> Admin
-              </Link>
-            )}
-
-            <Link to="/report"
-              className="flex items-center gap-1.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 px-4 py-2.5 rounded-xl transition-colors shadow-md shadow-blue-600/15 cursor-pointer">
-              <PlusCircle className="w-4 h-4" /> Report
-            </Link>
-
-
-
-            {user ? (
-              <div className="flex items-center gap-3 relative" ref={notifRef}>
-                {/* Bell */}
-                <button onClick={() => setShowNotif(!showNotif)}
-                  className="relative p-2.5 text-slate-500 hover:text-white transition-colors cursor-pointer bg-white/[0.04] hover:bg-white/[0.06] border border-white/[0.06] rounded-xl">
-                  <Bell className="w-4 h-4" />
+            {/* Notification dropdown */}
+            {showNotif && (
+              <div className="absolute right-0 top-10 w-80 bg-white dark:bg-[#1c1e21] border border-[#e8eaed] dark:border-[#2d2f33] rounded-xl shadow-lg overflow-hidden z-50">
+                <div className="p-3 border-b border-[#e8eaed] dark:border-[#2d2f33] flex justify-between items-center">
+                  <span className="text-sm font-bold text-[#202124] dark:text-[#e3e3e3]">Notifications</span>
                   {unreadCount > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 border-2 border-[#080e1a] rounded-full text-[9px] font-black text-white flex items-center justify-center animate-pulse">
-                      {unreadCount > 9 ? '9+' : unreadCount}
-                    </span>
+                    <button onClick={handleMarkAllRead} className="text-xs text-[#1a73e8] dark:text-[#4da3ff] hover:underline bg-transparent border-none cursor-pointer">
+                      Read all
+                    </button>
                   )}
-                </button>
+                </div>
 
-                {/* Notification dropdown */}
-                {showNotif && (
-                  <div className="absolute right-0 top-14 w-80 bg-[#0c1322] border border-white/[0.08] rounded-2xl shadow-2xl overflow-hidden z-50"
-                    style={{ animation: 'modalIn 0.15s ease-out' }}>
-                    <div className="p-3.5 border-b border-white/[0.05] flex justify-between items-center">
-                      <span className="text-xs font-bold text-white flex items-center gap-1.5">
-                        <Sparkles className="w-3.5 h-3.5 text-blue-400" /> Notifications
-                      </span>
-                      <div className="flex items-center gap-2">
-                        {unreadCount > 0 && (
-                          <button onClick={handleMarkAllRead}
-                            className="text-[10px] text-blue-400 hover:text-blue-300 font-semibold flex items-center gap-1 cursor-pointer">
-                            <CheckCheck className="w-3 h-3" /> Read all
-                          </button>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="max-h-80 overflow-y-auto divide-y divide-white/[0.04]">
-                      {notifications.map((notif) => {
-                        const Icon = NOTIF_ICONS[notif.type] || Bell;
-                        const colorClass = NOTIF_COLORS[notif.type] || 'text-slate-400 bg-slate-500/10';
-
-                        return (
-                          <div key={notif.id}
-                            className={`p-3.5 transition-colors text-left space-y-1.5 hover:bg-white/[0.02] ${
-                              !notif.isRead ? 'bg-blue-500/[0.03]' : ''
-                            }`}>
-                            <div className="flex items-start gap-2.5">
-                              <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${colorClass}`}>
-                                <Icon className="w-3.5 h-3.5" />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-[11px] font-bold text-white leading-tight">{notif.title}</p>
-                                <p className="text-[10px] text-slate-400 leading-relaxed mt-0.5 line-clamp-2">{notif.message}</p>
-                                <div className="flex items-center justify-between mt-1.5">
-                                  <span className="text-[9px] text-slate-600">{timeAgo(notif.createdAt)}</span>
-                                  {!notif.isRead && (
-                                    <button onClick={(e) => handleMarkAsRead(e, notif.id)}
-                                      className="text-[9px] text-blue-400 hover:text-blue-300 font-semibold flex items-center gap-0.5 cursor-pointer">
-                                      <Check className="w-2.5 h-2.5" /> Read
-                                    </button>
-                                  )}
-                                </div>
-                              </div>
+                <div className="max-h-80 overflow-y-auto">
+                  {notifications.map((notif) => {
+                    const Icon = NOTIF_ICONS[notif.type] || Bell;
+                    return (
+                      <div key={notif.id} className="p-3 border-b border-[#e8eaed] dark:border-[#2d2f33] hover:bg-[#f8f9fa] dark:hover:bg-[#28292d] cursor-pointer">
+                        <div className="flex gap-2">
+                          <Icon className="w-4 h-4 mt-1 text-[#1a73e8] dark:text-[#4da3ff]" />
+                          <div className="flex-1">
+                            <p className="text-xs font-bold text-[#202124] dark:text-[#e3e3e3]">{notif.title}</p>
+                            <p className="text-[11px] text-[#5f6368] dark:text-[#9aa0a6] mt-1">{notif.message}</p>
+                            <div className="flex justify-between mt-1 items-center">
+                              <span className="text-[10px] text-[#80868b]">{timeAgo(notif.createdAt)}</span>
+                              {!notif.isRead && (
+                                <button onClick={(e) => handleMarkAsRead(e, notif.id)} className="text-[10px] text-[#1a73e8] dark:text-[#4da3ff] bg-transparent border-none cursor-pointer hover:underline">
+                                  Mark read
+                                </button>
+                              )}
                             </div>
                           </div>
-                        );
-                      })}
-                      {notifications.length === 0 && (
-                        <div className="py-10 text-center space-y-2">
-                          <Bell className="w-7 h-7 mx-auto text-slate-700" />
-                          <p className="text-xs font-semibold text-slate-400">No notifications yet</p>
-                          <p className="text-[10px] text-slate-600">We'll alert you about matches and claims.</p>
                         </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Profile dropdown */}
-                <div className="flex items-center gap-3 relative group">
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-blue-500 to-emerald-500 flex items-center justify-center text-sm font-black shadow-inner cursor-pointer text-white">
-                    {user.name.charAt(0).toUpperCase()}
-                  </div>
-                  <div className="absolute right-0 top-10 w-48 bg-[#0c1322] border border-white/[0.08] rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 overflow-hidden">
-                    <div className="p-3.5 border-b border-white/[0.05]">
-                      <p className="text-xs text-white font-bold truncate">{user.name}</p>
-                      <p className="text-[10px] text-slate-500 truncate mt-0.5">{user.email}</p>
-                    </div>
-                    <Link to="/profile"
-                      className="w-full text-left px-4 py-2.5 text-xs font-semibold text-slate-300 hover:bg-white/[0.04] transition-colors cursor-pointer flex items-center gap-2 block">
-                      <User className="w-3.5 h-3.5" /> My Profile
-                    </Link>
-                    <button onClick={logout}
-                      className="w-full text-left px-4 py-2.5 text-xs font-semibold text-red-400 hover:bg-red-500/[0.05] transition-colors cursor-pointer">
-                      Sign Out
-                    </button>
-                  </div>
+                      </div>
+                    );
+                  })}
+                  {notifications.length === 0 && (
+                    <div className="p-6 text-center text-sm text-[#5f6368] dark:text-[#9aa0a6]">No notifications yet</div>
+                  )}
                 </div>
               </div>
-            ) : (
-              <Link to="/login"
-                className="text-xs font-bold text-white bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.08] px-5 py-2.5 rounded-xl transition-colors shadow-sm cursor-pointer">
-                Sign In
-              </Link>
             )}
-          </div>
 
-          {/* Mobile hamburger */}
-          <div className="md:hidden flex items-center gap-3">
-
-            {user && (
-              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-500 to-emerald-500 flex items-center justify-center text-xs font-black text-white shadow-sm">
+            {/* Profile dropdown */}
+            <div className="flex items-center relative group">
+              <div className="avatar-circle cursor-pointer">
                 {user.name.charAt(0).toUpperCase()}
               </div>
-            )}
-            <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="text-slate-400 p-1">
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-            </button>
+              <div className="absolute right-0 top-10 w-48 bg-white dark:bg-[#1c1e21] border border-[#e8eaed] dark:border-[#2d2f33] rounded-xl shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 overflow-hidden z-50">
+                <div className="p-3 border-b border-[#e8eaed] dark:border-[#2d2f33]">
+                  <p className="text-sm font-bold text-[#202124] dark:text-[#e3e3e3] truncate">{user.name}</p>
+                  <p className="text-xs text-[#5f6368] dark:text-[#9aa0a6] truncate mt-1">{user.email}</p>
+                </div>
+                <Link to="/profile" className="block w-full text-left px-4 py-2 text-sm text-[#202124] dark:text-[#e3e3e3] hover:bg-[#f8f9fa] dark:hover:bg-[#28292d] text-decoration-none">
+                  My Profile
+                </Link>
+                <button onClick={logout} className="block w-full text-left px-4 py-2 text-sm text-[#c5221f] dark:text-[#f28b82] hover:bg-[#f8f9fa] dark:hover:bg-[#28292d] bg-transparent border-none cursor-pointer">
+                  Sign Out
+                </button>
+              </div>
+            </div>
           </div>
-        </div>
+        ) : (
+          <Link to="/login" style={{ fontSize: '14px', fontWeight: '500', color: 'var(--text-primary)', textDecoration: 'none' }}>
+            Sign In
+          </Link>
+        )}
+        
+        <div className="navbar-divider" />
+        
+        <button onClick={toggleTheme} className="theme-toggle" aria-label="Toggle dark mode">
+          {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+        </button>
       </div>
+
+      {/* Mobile hamburger */}
+      <div className="md:hidden flex items-center gap-3">
+        <button onClick={toggleTheme} className="theme-toggle" aria-label="Toggle dark mode">
+          {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+        </button>
+        {user && (
+          <div className="avatar-circle">
+            {user.name.charAt(0).toUpperCase()}
+          </div>
+        )}
+        <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)' }}>
+          {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        </button>
+      </div>
+    </nav>
 
       {/* Mobile Menu */}
       {mobileMenuOpen && (

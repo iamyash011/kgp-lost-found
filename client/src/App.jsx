@@ -25,10 +25,7 @@ function AdminRoute({ children }) {
 function App() {
   return (
     <ThemeProvider>
-      <div className="min-h-screen bg-[#080e1a] text-white selection:bg-blue-500/30 font-body relative overflow-hidden">
-        {/* Global ambient background glow */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-[500px] bg-blue-500/10 blur-[120px] rounded-[100%] pointer-events-none -z-10" />
-        
+      <div>
         <RouteTracker />
         <Navbar />
         <main className="relative z-10">

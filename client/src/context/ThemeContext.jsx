@@ -18,10 +18,10 @@ export const ThemeProvider = ({ children }) => {
   useEffect(() => {
     const root = window.document.documentElement;
     if (isDark) {
-      root.classList.add('dark');
+      root.setAttribute('data-theme', 'dark');
       localStorage.setItem('kgp_theme', 'dark');
     } else {
-      root.classList.remove('dark');
+      root.removeAttribute('data-theme');
       localStorage.setItem('kgp_theme', 'light');
     }
   }, [isDark]);

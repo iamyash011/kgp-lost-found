@@ -108,7 +108,26 @@ router.get('/:id/matches', authenticateUser, async (req: Request, res: Response)
       take: 10,
     });
 
-    res.json(matches);
+    // Sanitize user names based on privacy settings
+    const sanitizedMatches = matches.map(match => ({
+      ...match,
+      lostItem: {
+        ...match.lostItem,
+        user: {
+          ...match.lostItem.user,
+          name: match.lostItem.showPosterName ? match.lostItem.user.name : null
+        }
+      },
+      foundItem: {
+        ...match.foundItem,
+        user: {
+          ...match.foundItem.user,
+          name: match.foundItem.showPosterName ? match.foundItem.user.name : null
+        }
+      }
+    }));
+
+    res.json(sanitizedMatches);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch matches' });
   }

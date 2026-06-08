@@ -95,7 +95,7 @@ router.get('/received', async (req: Request, res: Response) => {
       where: { itemId: { in: myItemIds } },
       include: {
         item: { select: { id: true, title: true, type: true, imageUrl: true } },
-        claimant: { select: { id: true, name: true, email: true, trustScore: true, createdAt: true } },
+        claimant: { select: { id: true, name: true, trustScore: true, createdAt: true } },
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -113,21 +113,23 @@ router.get('/sent', async (req: Request, res: Response) => {
       where: { claimantId: req.user!.id },
       include: {
         item: {
-          select: { id: true, title: true, type: true, imageUrl: true, location: true },
-          include: { user: { select: { name: true, whatsappNumber: true } } },
+          select: { 
+            id: true, title: true, type: true, imageUrl: true, location: true, showPosterName: true,
+            user: { select: { name: true, whatsappNumber: true } } 
+          },
         } as any,
       },
       orderBy: { createdAt: 'desc' },
     });
 
-    // Only reveal WhatsApp for accepted claims
+    // Only reveal WhatsApp for accepted claims, and respect showPosterName
     const sanitized = claims.map((claim: any) => ({
       ...claim,
       item: {
         ...claim.item,
-        user: claim.status === 'ACCEPTED'
+        user: claim.status === 'ACCEPTED' || claim.item.showPosterName
           ? claim.item.user
-          : { name: claim.item.user?.name || null, whatsappNumber: null },
+          : { name: null, whatsappNumber: null },
       },
     }));
 

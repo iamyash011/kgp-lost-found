@@ -14,6 +14,9 @@ dotenv.config();
 
 const app = express();
 
+// Trust Vercel's proxy so express-rate-limit doesn't crash
+app.set('trust proxy', 1);
+
 // Security headers
 app.use(helmet());
 

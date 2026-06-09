@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { api } from '../services/api';
 import { timeAgo } from '../utils/timeAgo';
+import { Logo } from './Logo';
 
 const NOTIF_ICONS = {
   MATCH: Sparkles,
@@ -14,16 +15,6 @@ const NOTIF_ICONS = {
   CLAIM_MORE_INFO: MessageCircle,
   CONTACT_UNLOCKED: MessageCircle,
   ADMIN_ACTION: AlertTriangle,
-};
-
-const NOTIF_COLORS = {
-  MATCH: 'text-blue-400 bg-blue-500/10',
-  CLAIM_RECEIVED: 'text-amber-400 bg-amber-500/10',
-  CLAIM_ACCEPTED: 'text-emerald-400 bg-emerald-500/10',
-  CLAIM_REJECTED: 'text-red-400 bg-red-500/10',
-  CLAIM_MORE_INFO: 'text-blue-400 bg-blue-500/10',
-  CONTACT_UNLOCKED: 'text-green-400 bg-green-500/10',
-  ADMIN_ACTION: 'text-red-400 bg-red-500/10',
 };
 
 export default function Navbar() {
@@ -40,12 +31,19 @@ export default function Navbar() {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
 
   const notifRef = useRef(null);
 
   useEffect(() => {
     setSearchVal(searchQuery);
   }, [searchQuery]);
+
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const handleSearchChange = (e) => {
     const val = e.target.value;
@@ -112,239 +110,145 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="navbar-container">
-      <Link to="/" className="navbar-logo" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <img src="/logo.png" alt="KGP Find Logo" style={{ height: '32px', width: '32px', objectFit: 'contain', borderRadius: '6px' }} />
-        <span>KGP Find</span>
-      </Link>
-
-      <div className="navbar-search">
-        <Search className="w-4 h-4 text-slate-400" />
-        <input 
-          type="text" 
-          placeholder="Search items, locations..."
-          value={searchVal} 
-          onChange={handleSearchChange} 
-        />
-        {searchVal && (
-          <button onClick={() => { setSearchVal(''); setSearchParams({}); }} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}>
-            <X className="w-3 h-3" />
-          </button>
-        )}
-      </div>
-
-      <div className="navbar-actions">
-        {isAdmin && (
-          <Link to="/admin" style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--accent-blue)', textDecoration: 'none' }}>
-            <Shield className="w-4 h-4 inline mr-1" /> Admin
+    <>
+      <nav style={{
+        position: 'sticky',
+        top: 0,
+        zIndex: 50,
+        height: '64px',
+        backgroundColor: 'rgba(5, 7, 15, 0.8)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        borderBottom: scrolled ? '1px solid rgba(255, 255, 255, 0.06)' : '1px solid transparent',
+        transition: 'border-color 0.3s ease'
+      }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 24px', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          
+          {/* Brand */}
+          <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
+            <Logo />
+            <span style={{ fontFamily: 'var(--font-heading)', fontSize: '20px', fontWeight: '800', letterSpacing: '-0.03em' }}>
+              <span style={{ color: 'var(--accent-gold)' }}>KGP</span>
+              <span style={{ color: '#ffffff' }}> Find</span>
+            </span>
           </Link>
-        )}
 
-        <Link to="/report" className="btn-report">
-          Report
-        </Link>
-
-        <div className="navbar-divider" />
-
-        {user ? (
-          <div className="flex items-center gap-3 relative" ref={notifRef}>
-            <button onClick={() => setShowNotif(!showNotif)} style={{ position: 'relative', background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}>
-              <Bell className="w-5 h-5" />
-              {unreadCount > 0 && (
-                <span style={{ position: 'absolute', top: '-4px', right: '-4px', width: '16px', height: '16px', backgroundColor: '#c5221f', borderRadius: '50%', color: 'white', fontSize: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
-                  {unreadCount > 9 ? '9+' : unreadCount}
-                </span>
-              )}
+          {/* Desktop Nav Actions */}
+          <div className="hidden md:flex items-center gap-6">
+            <button onClick={toggleTheme} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.7)' }}>
+              {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
             </button>
-
-            {/* Notification dropdown */}
-            {showNotif && (
-              <div className="absolute right-0 top-10 w-80 bg-white dark:bg-[#1c1e21] border border-[#e8eaed] dark:border-[#2d2f33] rounded-xl shadow-lg overflow-hidden z-50">
-                <div className="p-3 border-b border-[#e8eaed] dark:border-[#2d2f33] flex justify-between items-center">
-                  <span className="text-sm font-bold text-[#202124] dark:text-[#e3e3e3]">Notifications</span>
+            
+            {user ? (
+              <div className="flex items-center gap-4 relative" ref={notifRef}>
+                <button onClick={() => setShowNotif(!showNotif)} style={{ position: 'relative', background: 'transparent', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.8)' }}>
+                  <Bell className="w-5 h-5" />
                   {unreadCount > 0 && (
-                    <button onClick={handleMarkAllRead} className="text-xs text-[#1a73e8] dark:text-[#4da3ff] hover:underline bg-transparent border-none cursor-pointer">
-                      Read all
-                    </button>
+                    <span className="animate-wobble" style={{ position: 'absolute', top: '-2px', right: '-2px', width: '8px', height: '8px', backgroundColor: 'var(--accent-red)', borderRadius: '50%' }} />
                   )}
-                </div>
+                </button>
 
-                <div className="max-h-80 overflow-y-auto">
-                  {notifications.map((notif) => {
-                    const Icon = NOTIF_ICONS[notif.type] || Bell;
-                    return (
-                      <div key={notif.id} 
-                           onClick={() => {
-                             if (notif.relatedId) navigate(`/item/${notif.relatedId}`);
-                             setShowNotifications(false);
-                           }}
-                           className="p-3 border-b border-[#e8eaed] dark:border-[#2d2f33] hover:bg-[#f8f9fa] dark:hover:bg-[#28292d] cursor-pointer">
-                        <div className="flex gap-2">
-                          <Icon className="w-4 h-4 mt-1 text-[#1a73e8] dark:text-[#4da3ff]" />
-                          <div className="flex-1">
-                            <p className="text-xs font-bold text-[#202124] dark:text-[#e3e3e3]">{notif.title}</p>
-                            <p className="text-[11px] text-[#5f6368] dark:text-[#9aa0a6] mt-1">{notif.message}</p>
-                            <div className="flex justify-between mt-1 items-center">
-                              <span className="text-[10px] text-[#80868b]">{timeAgo(notif.createdAt)}</span>
-                              {!notif.isRead && (
-                                <button onClick={(e) => handleMarkAsRead(e, notif.id)} className="text-[10px] text-[#1a73e8] dark:text-[#4da3ff] bg-transparent border-none cursor-pointer hover:underline">
-                                  Mark read
-                                </button>
-                              )}
+                {/* Notifications Panel */}
+                {showNotif && (
+                  <div className="animate-slide-up" style={{
+                    position: 'absolute', right: 0, top: '40px', width: '360px',
+                    backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-medium)',
+                    borderRadius: '16px', boxShadow: '0 20px 40px rgba(0,0,0,0.4)', overflow: 'hidden'
+                  }}>
+                    <div style={{ padding: '16px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontFamily: 'var(--font-heading)', fontWeight: '700', fontSize: '16px' }}>Notifications</span>
+                      {unreadCount > 0 && (
+                        <button onClick={handleMarkAllRead} style={{ fontSize: '12px', color: 'var(--accent-blue)', background: 'transparent', border: 'none', cursor: 'pointer' }}>Mark all read</button>
+                      )}
+                    </div>
+                    <div style={{ maxHeight: '360px', overflowY: 'auto' }}>
+                      {notifications.map(notif => {
+                        const Icon = NOTIF_ICONS[notif.type] || Bell;
+                        const isMatch = notif.type === 'MATCH';
+                        return (
+                          <div key={notif.id} onClick={() => { if (notif.relatedId) navigate(`/item/${notif.relatedId}`); setShowNotif(false); }}
+                               style={{ padding: '16px', cursor: 'pointer', borderBottom: '1px solid var(--border-subtle)',
+                                        borderLeft: isMatch ? '3px solid var(--accent-gold)' : '3px solid transparent',
+                                        backgroundColor: notif.isRead ? 'transparent' : 'var(--accent-gold-dim)' }}>
+                            <div style={{ display: 'flex', gap: '12px' }}>
+                              <Icon size={18} style={{ color: isMatch ? 'var(--accent-gold)' : 'var(--accent-blue)', marginTop: '2px' }} />
+                              <div style={{ flex: 1 }}>
+                                <div style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)' }}>{notif.title}</div>
+                                <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '4px' }}>{notif.message}</div>
+                                <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '8px', fontWeight: '500' }}>{timeAgo(notif.createdAt)}</div>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                  {notifications.length === 0 && (
-                    <div className="p-6 text-center text-sm text-[#5f6368] dark:text-[#9aa0a6]">No notifications yet</div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Profile dropdown */}
-            <div className="flex items-center relative group">
-              <div className="avatar-circle cursor-pointer">
-                {user.name.charAt(0).toUpperCase()}
-              </div>
-              <div className="absolute right-0 top-10 w-48 bg-white dark:bg-[#1c1e21] border border-[#e8eaed] dark:border-[#2d2f33] rounded-xl shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 overflow-hidden z-50">
-                <div className="p-3 border-b border-[#e8eaed] dark:border-[#2d2f33]">
-                  <p className="text-sm font-bold text-[#202124] dark:text-[#e3e3e3] truncate">{user.name}</p>
-                  <p className="text-xs text-[#5f6368] dark:text-[#9aa0a6] truncate mt-1">{user.email}</p>
-                </div>
-                <Link to="/profile" className="block w-full text-left px-4 py-2 text-sm text-[#202124] dark:text-[#e3e3e3] hover:bg-[#f8f9fa] dark:hover:bg-[#28292d] text-decoration-none">
-                  My Profile
-                </Link>
-                <button onClick={logout} className="block w-full text-left px-4 py-2 text-sm text-[#c5221f] dark:text-[#f28b82] hover:bg-[#f8f9fa] dark:hover:bg-[#28292d] bg-transparent border-none cursor-pointer">
-                  Sign Out
-                </button>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <Link to="/login" style={{ fontSize: '14px', fontWeight: '500', color: 'var(--text-primary)', textDecoration: 'none' }}>
-            Sign In
-          </Link>
-        )}
-        
-        <div className="navbar-divider" />
-        
-        <button onClick={toggleTheme} className="theme-toggle" aria-label="Toggle dark mode">
-          {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-        </button>
-      </div>
-
-      {/* Mobile hamburger */}
-      <div className="mobile-menu-btn">
-        <button onClick={toggleTheme} className="theme-toggle" aria-label="Toggle dark mode">
-          {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-        </button>
-        {user && (
-          <div className="avatar-circle">
-            {user.name.charAt(0).toUpperCase()}
-          </div>
-        )}
-        <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)' }}>
-          {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-        </button>
-      </div>
-
-      {/* Mobile Menu */}
-      {mobileMenuOpen && (
-        <div className="mobile-menu-container">
-          <div className="px-4 pt-2 pb-4 space-y-3">
-            <div className="relative">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
-              <input type="text" placeholder="Search items, locations..."
-                value={searchVal} onChange={handleSearchChange}
-                className="w-full bg-white/[0.04] text-xs text-white rounded-xl pl-10 pr-4 py-3 border border-white/[0.06] focus:outline-none focus:border-blue-500/40" />
-            </div>
-
-            <div className="flex flex-col gap-2">
-              {isAdmin && (
-                <Link to="/admin" onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-2 text-sm font-semibold text-amber-300 bg-amber-500/10 p-3 rounded-xl">
-                  <Shield className="w-4 h-4" /> Admin Dashboard
-                </Link>
-              )}
-              <Link to="/report" onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center gap-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-500 p-3 rounded-xl shadow-md">
-                <PlusCircle className="w-4 h-4" /> Report Item
-              </Link>
-
-              {user ? (
-                <>
-                  <Link to="/profile" onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center gap-2 text-sm font-semibold text-slate-300 bg-white/[0.04] p-3 rounded-xl">
-                    <User className="w-4 h-4 text-slate-500" /> My Profile
-                  </Link>
-                  <button onClick={() => { setShowNotif(!showNotif); }}
-                    className="flex items-center justify-between text-sm font-semibold text-slate-300 bg-white/[0.04] p-3 rounded-xl">
-                    <div className="flex items-center gap-2"><Bell className="w-4 h-4 text-slate-500" /> Notifications</div>
-                    {unreadCount > 0 && (
-                      <span className="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">{unreadCount}</span>
-                    )}
-                  </button>
-
-                  {showNotif && (
-                    <div className="bg-white/[0.02] rounded-xl border border-white/[0.06] overflow-hidden">
-                      <div className="max-h-64 overflow-y-auto divide-y divide-white/[0.04]">
-                        {notifications.map((notif) => {
-                          const Icon = NOTIF_ICONS[notif.type] || Bell;
-                          return (
-                            <div key={notif.id} 
-                             onClick={() => {
-                               if (notif.relatedId) navigate(`/item/${notif.relatedId}`);
-                               setShowMobileMenu(false);
-                             }}
-                             className="p-3 cursor-pointer hover:bg-white/[0.02] border-b border-white/[0.04]">
-                              <div className="flex items-start gap-2">
-                                <Icon className="w-3.5 h-3.5 text-blue-400 mt-0.5 shrink-0" />
-                                <div>
-                                  <p className="text-[11px] font-bold text-white">{notif.title}</p>
-                                  <p className="text-[10px] text-slate-400 mt-0.5">{notif.message}</p>
-                                </div>
-                              </div>
-                              <div className="flex gap-2 mt-2">
-                                {!notif.isRead && (
-                                  <button onClick={(e) => handleMarkAsRead(e, notif.id)}
-                                    className="px-3 py-1 bg-white/[0.04] text-slate-300 rounded-lg text-[10px] font-semibold cursor-pointer">Read</button>
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })}
-                        {notifications.length === 0 && (
-                          <div className="p-4 text-center text-slate-600 text-xs">No notifications yet</div>
-                        )}
-                      </div>
+                        )
+                      })}
+                      {notifications.length === 0 && (
+                        <div style={{ padding: '32px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '14px' }}>You're all caught up. We'll ping you when something matches.</div>
+                      )}
                     </div>
-                  )}
+                  </div>
+                )}
 
-                  <button onClick={() => { logout(); setMobileMenuOpen(false); }}
-                    className="flex items-center gap-2 text-sm font-semibold text-red-400 bg-red-500/[0.05] p-3 rounded-xl">
-                    Sign Out
-                  </button>
-                </>
-              ) : (
-                <Link to="/login" onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-2 text-sm font-semibold text-white bg-white/[0.06] p-3 rounded-xl">
-                  Sign In
-                </Link>
-              )}
-            </div>
+                {/* Profile Circle */}
+                <div className="relative group">
+                  <div style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: 'var(--accent-gold)', color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '600', cursor: 'pointer' }}>
+                    {user.name.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="absolute right-0 top-10 w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200"
+                       style={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-medium)', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}>
+                    <div style={{ padding: '12px', borderBottom: '1px solid var(--border-subtle)' }}>
+                      <div style={{ fontWeight: '600', fontSize: '14px' }}>{user.name}</div>
+                      <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{user.email}</div>
+                    </div>
+                    {isAdmin && (
+                       <Link to="/admin" style={{ display: 'block', padding: '10px 16px', fontSize: '13px', color: 'var(--accent-gold)', textDecoration: 'none', fontWeight: '600' }}>Admin Dashboard</Link>
+                    )}
+                    <Link to="/profile" style={{ display: 'block', padding: '10px 16px', fontSize: '13px', color: 'var(--text-primary)', textDecoration: 'none' }}>My Profile</Link>
+                    <button onClick={logout} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '10px 16px', fontSize: '13px', color: 'var(--accent-red)', background: 'transparent', border: 'none', cursor: 'pointer' }}>Sign Out</button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <Link to="/login" style={{ fontSize: '15px', fontWeight: '600', color: '#ffffff', textDecoration: 'none', opacity: 0.8, transition: 'opacity 0.2s' }} onMouseEnter={e=>e.target.style.opacity=1} onMouseLeave={e=>e.target.style.opacity=0.8}>
+                Sign in
+              </Link>
+            )}
+          </div>
+
+          {/* Mobile Menu Button */}
+          <div className="md:hidden">
+            <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} style={{ background: 'transparent', border: 'none', color: '#fff' }}>
+              {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
           </div>
         </div>
-      )}
+      </nav>
 
-      <style>{`
-        @keyframes modalIn {
-          from { opacity: 0; transform: scale(0.96) translateY(4px); }
-          to   { opacity: 1; transform: scale(1) translateY(0); }
-        }
-      `}</style>
-    </nav>
+      {/* Bottom Nav Bar (Mobile Only) */}
+      {user && (
+        <div className="md:hidden" style={{
+          position: 'fixed', bottom: 0, left: 0, right: 0, height: '64px',
+          backgroundColor: 'var(--bg-secondary)', borderTop: '1px solid var(--border-subtle)',
+          display: 'flex', justifyContent: 'space-around', alignItems: 'center', zIndex: 40,
+          paddingBottom: 'env(safe-area-inset-bottom)'
+        }}>
+          <Link to="/" style={{ color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', alignItems: 'center', textDecoration: 'none' }}>
+            <Search size={20} />
+            <span style={{ fontSize: '10px', marginTop: '4px', fontWeight: '500' }}>Explore</span>
+          </Link>
+          <Link to="/report" style={{ position: 'relative', top: '-16px' }}>
+            <div style={{ width: '48px', height: '48px', borderRadius: '50%', backgroundColor: 'var(--accent-gold)', color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 16px rgba(201,162,39,0.3)' }}>
+              <PlusCircle size={24} strokeWidth={2.5} />
+            </div>
+          </Link>
+          <Link to="/profile" style={{ color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', alignItems: 'center', textDecoration: 'none' }}>
+            <User size={20} />
+            <span style={{ fontSize: '10px', marginTop: '4px', fontWeight: '500' }}>Profile</span>
+          </Link>
+        </div>
+      )}
+      
+      {/* Spacer for mobile bottom nav */}
+      {user && <div className="md:hidden" style={{ height: '64px' }} />}
+    </>
   );
 }

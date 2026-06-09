@@ -62,14 +62,8 @@ router.post('/google', async (req: Request, res: Response) => {
     // Upsert the user in the database
     let user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
-      // New user — WhatsApp number is REQUIRED to create an account
-      if (!whatsappNumber) {
-        return res.status(403).json({
-          code: 'NEW_USER_NEEDS_WHATSAPP',
-          error: 'No account found. Please use "Create Account" and provide your WhatsApp number first.',
-        });
-      }
-      if (!isValidWhatsapp(whatsappNumber)) {
+      // New user — WhatsApp number is optional
+      if (whatsappNumber && !isValidWhatsapp(whatsappNumber)) {
         return res.status(400).json({ error: 'Invalid WhatsApp number format. Must be 10 digits starting with 6-9.' });
       }
       user = await prisma.user.create({
@@ -77,7 +71,7 @@ router.post('/google', async (req: Request, res: Response) => {
           googleId,
           email,
           name: name ?? email.split('@')[0],
-          whatsappNumber,
+          whatsappNumber: whatsappNumber || null,
         },
       });
     } else {

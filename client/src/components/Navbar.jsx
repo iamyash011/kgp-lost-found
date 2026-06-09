@@ -173,7 +173,12 @@ export default function Navbar() {
                   {notifications.map((notif) => {
                     const Icon = NOTIF_ICONS[notif.type] || Bell;
                     return (
-                      <div key={notif.id} className="p-3 border-b border-[#e8eaed] dark:border-[#2d2f33] hover:bg-[#f8f9fa] dark:hover:bg-[#28292d] cursor-pointer">
+                      <div key={notif.id} 
+                           onClick={() => {
+                             if (notif.relatedId) navigate(`/item/${notif.relatedId}`);
+                             setShowNotifications(false);
+                           }}
+                           className="p-3 border-b border-[#e8eaed] dark:border-[#2d2f33] hover:bg-[#f8f9fa] dark:hover:bg-[#28292d] cursor-pointer">
                         <div className="flex gap-2">
                           <Icon className="w-4 h-4 mt-1 text-[#1a73e8] dark:text-[#4da3ff]" />
                           <div className="flex-1">
@@ -289,7 +294,12 @@ export default function Navbar() {
                         {notifications.map((notif) => {
                           const Icon = NOTIF_ICONS[notif.type] || Bell;
                           return (
-                            <div key={notif.id} className={`p-3 ${!notif.isRead ? 'bg-blue-500/[0.03]' : ''}`}>
+                            <div key={notif.id} 
+                             onClick={() => {
+                               if (notif.relatedId) navigate(`/item/${notif.relatedId}`);
+                               setShowMobileMenu(false);
+                             }}
+                             className="p-3 cursor-pointer hover:bg-white/[0.02] border-b border-white/[0.04]">
                               <div className="flex items-start gap-2">
                                 <Icon className="w-3.5 h-3.5 text-blue-400 mt-0.5 shrink-0" />
                                 <div>

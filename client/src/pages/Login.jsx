@@ -188,12 +188,12 @@ export default function Login() {
           <div className="space-y-5">
             <div className="p-4 bg-emerald-500/5 border border-emerald-500/10 rounded-xl">
               <p className="text-xs text-white font-semibold mb-0.5">New here? Welcome!</p>
-              <p className="text-[11px] text-slate-400 leading-relaxed">Create your account with your IIT KGP Google account. WhatsApp is required so others can contact you about matches.</p>
+              <p className="text-[11px] text-slate-400 leading-relaxed">Create your account with your IIT KGP Google account. WhatsApp is optional but recommended so matches can reach you.</p>
             </div>
 
             <div>
               <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2">
-                WhatsApp Number <span className="text-red-400">*</span>
+                WhatsApp Number <span className="text-slate-600 font-normal normal-case">(optional)</span>
               </label>
               <div className="relative">
                 <MessageSquare className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
@@ -201,20 +201,21 @@ export default function Login() {
                   onChange={(e) => handleWhatsappChange(e.target.value)}
                   className={inputClass.replace('focus:border-blue-500/40', 'focus:border-emerald-500/40').replace('focus:ring-blue-500/20', 'focus:ring-emerald-500/20')} />
               </div>
-              <p className="text-[10px] text-slate-500 mt-1.5">Required so matches can reach you directly.</p>
+              <p className="text-[10px] text-slate-500 mt-1.5">Optional: So matches can reach you directly.</p>
             </div>
 
-            {isValidWhatsapp(whatsapp) ? (
-              <GoogleButton
-                onClick={() => { setSigningIn(true); googleSignIn(); }}
-                text={signingIn ? 'Creating account…' : 'Sign up with Google'}
-                disabled={signingIn}
-              />
-            ) : (
-              <div className="w-full text-xs font-semibold text-slate-400 bg-white/[0.02] px-6 py-3 rounded-xl border border-white/[0.06] text-center">
-                Enter your 10-digit WhatsApp number first
-              </div>
-            )}
+            <GoogleButton
+              onClick={() => {
+                if (whatsapp && !isValidWhatsapp(whatsapp)) {
+                  setError('Invalid WhatsApp number. Must be exactly 10 digits starting with 6-9.');
+                  return;
+                }
+                setSigningIn(true);
+                googleSignIn();
+              }}
+              text={signingIn ? 'Creating account…' : 'Sign up with Google'}
+              disabled={signingIn}
+            />
             <p className="text-[10px] text-center text-slate-500">
               Only <strong className="text-slate-400">IIT KGP</strong> emails are allowed.
             </p>

@@ -233,7 +233,7 @@ router.patch('/:id/reject', async (req: Request, res: Response) => {
         message: responseNote
           ? `Your claim on "${claim.item.title}" was not accepted. Note: "${responseNote}"`
           : `Your claim on "${claim.item.title}" was not accepted.`,
-        relatedId: claim.id,
+        relatedId: claim.itemId,
       },
     });
 

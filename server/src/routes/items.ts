@@ -425,7 +425,7 @@ async function findAndStoreMatches(newItem: MatchableItem) {
             type: 'MATCH',
             title: 'Potential Match Found!',
             message: `A found "${foundItem.title}" near ${foundItem.location} could match your lost "${lostItem.title}".`,
-            relatedId: match.id,
+            relatedId: foundItem.id,
           },
         });
 
@@ -436,7 +436,7 @@ async function findAndStoreMatches(newItem: MatchableItem) {
             type: 'MATCH',
             title: 'Potential Match Found!',
             message: `Someone lost a "${lostItem.title}" near ${lostItem.location} — it could match your found "${foundItem.title}".`,
-            relatedId: match.id,
+            relatedId: lostItem.id,
           },
         });
       }

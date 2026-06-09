@@ -208,7 +208,7 @@ export default function Feed() {
 
 
   return (
-    <div className="page-container flex flex-col lg:flex-row gap-8" style={{ paddingTop: '40px' }}>
+    <div className="page-container flex flex-col lg:flex-row gap-8 w-full max-w-[100vw] overflow-x-hidden" style={{ paddingTop: '40px' }}>
       
       {/* Left Sidebar (Desktop) */}
       <aside className="hidden lg:flex flex-col shrink-0 gap-8 w-[260px]">

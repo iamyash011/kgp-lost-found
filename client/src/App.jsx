@@ -31,7 +31,7 @@ function App() {
       <div className="min-h-screen flex flex-col bg-[var(--bg-page)] text-[var(--text-primary)] transition-colors duration-300 font-sans">
         <RouteTracker />
         <Navbar />
-        <main className="relative z-10 flex-1 flex flex-col">
+        <main className="relative z-10 flex-1 flex flex-col w-full max-w-[100vw] overflow-x-hidden">
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/feed" element={<Feed />} />

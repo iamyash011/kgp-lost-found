@@ -259,17 +259,21 @@ export default function Feed() {
       <main style={{ flex: 1, minWidth: 0 }}>
         
         {/* Mobile Filters Horizontal Scroll */}
-        <div className="lg:hidden mb-6" style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '8px' }}>
-          {['ALL', 'LOST', 'FOUND'].map(f => (
-            <button key={f} onClick={() => setActiveFilter(f)} style={{ flexShrink: 0, padding: '8px 16px', fontSize: '13px', fontWeight: '600', backgroundColor: activeFilter === f ? 'var(--accent-gold-dim)' : 'var(--bg-tertiary)', color: activeFilter === f ? 'var(--accent-gold)' : 'var(--text-secondary)', border: activeFilter === f ? '1px solid var(--accent-gold)' : '1px solid transparent', borderRadius: '8px' }}>
-              {f === 'ALL' ? 'All Items' : f.charAt(0) + f.slice(1).toLowerCase()}
-            </button>
-          ))}
-          {CATEGORIES.map(cat => (
-             <button key={cat} onClick={() => setActiveCategory(cat)} style={{ flexShrink: 0, padding: '8px 16px', fontSize: '13px', backgroundColor: activeCategory === cat ? 'var(--accent-gold-dim)' : 'var(--bg-tertiary)', color: activeCategory === cat ? 'var(--accent-gold)' : 'var(--text-primary)', border: activeCategory === cat ? '1px solid var(--accent-gold)' : '1px solid transparent', borderRadius: '8px' }}>
-               {cat}
-             </button>
-          ))}
+        <div className="lg:hidden mb-6 hide-scrollbar" style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '8px', scrollBehavior: 'smooth' }}>
+          <div style={{ display: 'flex', gap: '8px', paddingRight: '8px', borderRight: '1px solid var(--border-medium)' }}>
+            {['ALL', 'LOST', 'FOUND'].map(f => (
+              <button key={f} onClick={() => setActiveFilter(f)} style={{ flexShrink: 0, padding: '8px 16px', fontSize: '13px', fontWeight: '600', backgroundColor: activeFilter === f ? 'var(--accent-gold-dim)' : 'var(--bg-tertiary)', color: activeFilter === f ? 'var(--accent-gold)' : 'var(--text-secondary)', border: activeFilter === f ? '1px solid var(--accent-gold)' : '1px solid transparent', borderRadius: '8px', transition: 'all 0.2s' }}>
+                {f === 'ALL' ? 'All Status' : f.charAt(0) + f.slice(1).toLowerCase()}
+              </button>
+            ))}
+          </div>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            {CATEGORIES.map(cat => (
+               <button key={cat} onClick={() => setActiveCategory(cat)} style={{ flexShrink: 0, padding: '8px 16px', fontSize: '13px', backgroundColor: activeCategory === cat ? 'var(--accent-gold-dim)' : 'var(--bg-tertiary)', color: activeCategory === cat ? 'var(--accent-gold)' : 'var(--text-primary)', border: activeCategory === cat ? '1px solid var(--accent-gold)' : '1px solid transparent', borderRadius: '8px', transition: 'all 0.2s' }}>
+                 {cat}
+               </button>
+            ))}
+          </div>
         </div>
 
         {searchQuery && (

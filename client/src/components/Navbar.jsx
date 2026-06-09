@@ -240,45 +240,51 @@ export default function Navbar() {
 
         {/* Mobile Menu Overlay */}
         {mobileMenuOpen && (
-          <div style={{
-            position: 'absolute', top: '64px', left: 0, right: 0,
-            backgroundColor: 'var(--bg-secondary)', borderBottom: '1px solid var(--border-subtle)',
-            padding: '16px 24px', boxShadow: '0 10px 30px rgba(0,0,0,0.5)', zIndex: 45
-          }}>
-            <div style={{ position: 'relative', marginBottom: '16px' }}>
-              <Search className="w-4 h-4" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-              <input type="text" placeholder="Search items, locations..."
-                value={searchVal} onChange={handleSearchChange}
-                style={{
-                  width: '100%', padding: '12px 12px 12px 36px', backgroundColor: 'var(--bg-tertiary)',
-                  border: '1px solid var(--border-subtle)', borderRadius: '12px',
-                  color: 'var(--text-primary)', fontSize: '14px', outline: 'none'
-                }}
-              />
-            </div>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {isAdmin && (
-                <Link to="/admin" onClick={() => setMobileMenuOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px', backgroundColor: 'var(--accent-gold-dim)', color: 'var(--accent-gold)', borderRadius: '12px', textDecoration: 'none', fontWeight: '600', fontSize: '14px' }}>
-                  <Shield size={16} /> Admin Dashboard
-                </Link>
-              )}
-              {user ? (
-                <>
-                  <Link to="/report" onClick={() => setMobileMenuOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px', backgroundColor: 'var(--accent-blue)', color: '#fff', borderRadius: '12px', textDecoration: 'none', fontWeight: '600', fontSize: '14px' }}>
-                    <PlusCircle size={16} /> Post Item
+          <>
+            <div 
+              style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)', zIndex: 40 }} 
+              onClick={() => setMobileMenuOpen(false)}
+            />
+            <div className="animate-slide-up" style={{
+              position: 'absolute', top: '72px', left: 0, right: 0,
+              backgroundColor: 'var(--bg-secondary)', borderBottom: '1px solid var(--border-subtle)',
+              padding: '16px 24px', boxShadow: '0 10px 30px rgba(0,0,0,0.2)', zIndex: 45
+            }}>
+              <div style={{ position: 'relative', marginBottom: '16px' }}>
+                <Search className="w-4 h-4" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                <input type="text" placeholder="Search items, locations..."
+                  value={searchVal} onChange={handleSearchChange}
+                  style={{
+                    width: '100%', padding: '12px 12px 12px 36px', backgroundColor: 'var(--bg-tertiary)',
+                    border: '1px solid var(--border-subtle)', borderRadius: '12px',
+                    color: 'var(--text-primary)', fontSize: '14px', outline: 'none'
+                  }}
+                />
+              </div>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {isAdmin && (
+                  <Link to="/admin" onClick={() => setMobileMenuOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px', backgroundColor: 'var(--accent-gold-dim)', color: 'var(--accent-gold)', borderRadius: '12px', textDecoration: 'none', fontWeight: '600', fontSize: '14px' }}>
+                    <Shield size={16} /> Admin Dashboard
                   </Link>
-                  <button onClick={() => { logout(); setMobileMenuOpen(false); }} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px', backgroundColor: 'rgba(247, 89, 89, 0.1)', color: 'var(--accent-red)', border: 'none', borderRadius: '12px', cursor: 'pointer', fontWeight: '600', fontSize: '14px', textAlign: 'left' }}>
-                    Sign Out
-                  </button>
-                </>
-              ) : (
-                <Link to="/login" onClick={() => setMobileMenuOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px', backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-primary)', borderRadius: '12px', textDecoration: 'none', fontWeight: '600', fontSize: '14px' }}>
-                  Sign In
-                </Link>
-              )}
+                )}
+                {user ? (
+                  <>
+                    <Link to="/report" onClick={() => setMobileMenuOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px', backgroundColor: 'var(--accent-blue)', color: '#fff', borderRadius: '12px', textDecoration: 'none', fontWeight: '600', fontSize: '14px' }}>
+                      <PlusCircle size={16} /> Post Item
+                    </Link>
+                    <button onClick={() => { logout(); setMobileMenuOpen(false); }} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px', backgroundColor: 'rgba(247, 89, 89, 0.1)', color: 'var(--accent-red)', border: 'none', borderRadius: '12px', cursor: 'pointer', fontWeight: '600', fontSize: '14px', textAlign: 'left' }}>
+                      Sign Out
+                    </button>
+                  </>
+                ) : (
+                  <Link to="/login" onClick={() => setMobileMenuOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px', backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-primary)', borderRadius: '12px', textDecoration: 'none', fontWeight: '600', fontSize: '14px' }}>
+                    Sign In
+                  </Link>
+                )}
+              </div>
             </div>
-          </div>
+          </>
         )}
       </nav>
 
@@ -305,9 +311,6 @@ export default function Navbar() {
           </Link>
         </div>
       )}
-      
-      {/* Spacer for mobile bottom nav */}
-      {user && <div className="md:hidden" style={{ height: '64px' }} />}
     </>
   );
 }

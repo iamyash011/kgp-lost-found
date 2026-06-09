@@ -77,6 +77,14 @@ h1, h2, h3, h4, h5, h6, .font-heading {
   background: var(--text-muted);
 }
 
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 /* Custom Animations */
 @keyframes pulse-subtle {
   0% { opacity: 0.4; }

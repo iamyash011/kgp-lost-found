@@ -25,6 +25,7 @@ function AdminRoute({ children }) {
 }
 
 function App() {
+  const { user } = useAuth();
   return (
     <ThemeProvider>
       <div className="min-h-screen flex flex-col bg-[var(--bg-page)] text-[var(--text-primary)] transition-colors duration-300 font-sans">
@@ -62,6 +63,7 @@ function App() {
           </Routes>
         </main>
         <Footer />
+        {user && <div className="md:hidden" style={{ height: '64px' }} />}
       </div>
     </ThemeProvider>
   );

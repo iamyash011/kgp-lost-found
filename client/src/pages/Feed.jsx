@@ -326,6 +326,7 @@ export default function Feed() {
   const searchQuery = searchParams.get('q') || '';
 
   const [selectedItem, setSelectedItem] = useState(null);
+  const [itemToReport, setItemToReport] = useState(null);
   const [activeFilter, setActiveFilter] = useState('ALL');
   const [activeCategory, setActiveCategory] = useState('All');
   const [items, setItems] = useState([]);
@@ -516,10 +517,24 @@ export default function Feed() {
                       {isOwner ? 'You' : (posterName || 'Verified User')}
                     </span>
                   </div>
-                  
-                  <span className="card-view-link">
-                    View →
-                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    {user && !isOwner && (
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setItemToReport(item);
+                        }}
+                        style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center' }}
+                        className="text-slate-400 hover:text-red-400 transition-colors"
+                        title="Report this post"
+                      >
+                        <Flag className="w-4 h-4" />
+                      </button>
+                    )}
+                    <span className="card-view-link">
+                      View →
+                    </span>
+                  </div>
                 </div>
               </div>
             );
@@ -537,6 +552,10 @@ export default function Feed() {
 
       {selectedItem && (
         <ItemModal item={selectedItem} onClose={() => setSelectedItem(null)} onActionSuccess={handleActionSuccess} />
+      )}
+
+      {itemToReport && (
+        <ReportModal targetType="ITEM" targetId={itemToReport.id} targetTitle={itemToReport.title} onClose={() => setItemToReport(null)} onSuccess={() => triggerToast('Report submitted.', 'info')} />
       )}
 
       <style>{`

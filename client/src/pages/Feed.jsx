@@ -161,7 +161,7 @@ function ItemModal({ item, onClose, onActionSuccess }) {
 // ═══════════════════════════════════════════════════════
 export default function Feed() {
   const { user } = useAuth();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const searchQuery = searchParams.get('q') || '';
 
   const [selectedItem, setSelectedItem] = useState(null);
@@ -187,6 +187,22 @@ export default function Feed() {
   useEffect(() => {
     fetchItems();
   }, []);
+
+  const itemIdParam = searchParams.get('item');
+
+  useEffect(() => {
+    if (itemIdParam && !loading) {
+      const foundItem = items.find(i => i.id === itemIdParam);
+      if (foundItem) {
+        setSelectedItem(foundItem);
+      } else {
+        // Fetch individually if not in active feed (e.g. resolved items)
+        api.getItem(itemIdParam)
+          .then(item => setSelectedItem(item))
+          .catch(err => console.error("Item not found", err));
+      }
+    }
+  }, [itemIdParam, items, loading]);
 
   const filteredItems = items.filter((item) => {
     if (item.status !== 'ACTIVE') return false;
@@ -302,7 +318,12 @@ export default function Feed() {
       </main>
 
       {selectedItem && (
-        <ItemModal item={selectedItem} onClose={() => setSelectedItem(null)} onActionSuccess={(msg, type) => { fetchItems(); }} />
+        <ItemModal item={selectedItem} onClose={() => {
+          setSelectedItem(null);
+          const newParams = new URLSearchParams(searchParams);
+          newParams.delete('item');
+          setSearchParams(newParams, { replace: true });
+        }} onActionSuccess={(msg, type) => { fetchItems(); }} />
       )}
       {itemToReport && (
         <ReportModal targetType="ITEM" targetId={itemToReport.id} targetTitle={itemToReport.title} onClose={() => setItemToReport(null)} onSuccess={() => {}} />

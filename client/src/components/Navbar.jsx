@@ -140,10 +140,10 @@ export default function Navbar() {
             </div>
           </div>
 
-          {/* Desktop Nav Actions */}
-          <div className="hidden md:flex items-center gap-6">
+          {/* Nav Actions */}
+          <div className="flex items-center gap-4 md:gap-6">
             {user && (
-              <Link to="/report" className="btn-gold" style={{ padding: '8px 16px', fontSize: '14px', borderRadius: '6px', height: '36px' }}>
+              <Link to="/report" className="hidden md:flex btn-gold" style={{ padding: '8px 16px', fontSize: '14px', borderRadius: '6px', height: '36px', textDecoration: 'none', alignItems: 'center', gap: '8px' }}>
                 <PlusCircle size={16} /> Post Item
               </Link>
             )}
@@ -164,9 +164,9 @@ export default function Navbar() {
                 {/* Notifications Panel */}
                 {showNotif && (
                   <div className="animate-slide-up" style={{
-                    position: 'absolute', right: 0, top: '40px', width: '360px',
+                    position: 'absolute', right: '-10px', top: '40px', width: 'max(300px, calc(100vw - 32px))', maxWidth: '360px',
                     backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-medium)',
-                    borderRadius: '16px', boxShadow: '0 20px 40px rgba(0,0,0,0.4)', overflow: 'hidden'
+                    borderRadius: '16px', boxShadow: '0 20px 40px rgba(0,0,0,0.4)', overflow: 'hidden', zIndex: 100
                   }}>
                     <div style={{ padding: '16px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span style={{ fontFamily: 'var(--font-heading)', fontWeight: '700', fontSize: '16px' }}>Notifications</span>
@@ -179,7 +179,7 @@ export default function Navbar() {
                         const Icon = NOTIF_ICONS[notif.type] || Bell;
                         const isMatch = notif.type === 'MATCH';
                         return (
-                          <div key={notif.id} onClick={() => { if (notif.relatedId) navigate(`/item/${notif.relatedId}`); setShowNotif(false); }}
+                          <div key={notif.id} onClick={() => { if (notif.relatedId) navigate(`/feed?item=${notif.relatedId}`); setShowNotif(false); }}
                                style={{ padding: '16px', cursor: 'pointer', borderBottom: '1px solid var(--border-subtle)',
                                         borderLeft: isMatch ? '3px solid var(--accent-gold)' : '3px solid transparent',
                                         backgroundColor: notif.isRead ? 'transparent' : 'var(--accent-gold-dim)' }}>
@@ -202,7 +202,7 @@ export default function Navbar() {
                 )}
 
                 {/* Profile Circle */}
-                <div className="relative group">
+                <div className="hidden md:block relative group">
                   <Link to="/profile" style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: 'var(--accent-gold-dim)', color: 'var(--accent-gold)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '700', textDecoration: 'none', border: '1px solid var(--accent-gold)' }}>
                     {user.name.charAt(0).toUpperCase()}
                   </Link>
@@ -221,18 +221,13 @@ export default function Navbar() {
                 </div>
               </div>
             ) : (
-              <Link to="/login" style={{ fontSize: '15px', fontWeight: '600', color: 'var(--text-primary)', textDecoration: 'none', transition: 'opacity 0.2s' }}>
+              <Link to="/login" className="hidden md:block" style={{ fontSize: '15px', fontWeight: '600', color: 'var(--text-primary)', textDecoration: 'none', transition: 'opacity 0.2s' }}>
                 Sign in
               </Link>
             )}
-          </div>
 
-          {/* Mobile Menu Button */}
-          <div className="md:hidden flex items-center gap-4">
-            <button onClick={toggleTheme} style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)' }}>
-              {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-            </button>
-            <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)' }}>
+            {/* Mobile Menu Button */}
+            <button className="md:hidden" onClick={() => setMobileMenuOpen(!mobileMenuOpen)} style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)' }}>
               {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
           </div>

@@ -211,7 +211,7 @@ export default function Feed() {
     <div className="page-container flex flex-col lg:flex-row gap-8" style={{ paddingTop: '40px' }}>
       
       {/* Left Sidebar (Desktop) */}
-      <aside style={{ width: '260px', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: '32px' }} className="hidden lg:flex">
+      <aside className="hidden lg:flex flex-col shrink-0 gap-8 w-[260px]">
         
         <div>
           <div style={{ fontSize: '13px', fontWeight: '500', color: 'var(--text-secondary)', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Status</div>

@@ -397,52 +397,83 @@ export default function Feed() {
       {/* Hero / Trust & Info Banner */}
       <div className="mb-6 rounded-2xl overflow-hidden border border-blue-500/10 bg-gradient-to-br from-blue-900/10 via-[#0c1322] to-emerald-900/5">
         <div className="p-5 md:p-6">
-          <h2 className="text-lg md:text-xl font-bold text-white mb-1.5 flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-amber-400" /> Welcome to KGP Find
-          </h2>
-          <p className="text-xs md:text-sm text-slate-400 mb-6">The smart, secure way to recover your lost belongings on campus.</p>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* How it works */}
-            <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.05] hover:bg-white/[0.04] transition-colors">
-              <div className="w-8 h-8 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center mb-3">
-                <Search className="w-4 h-4" />
-              </div>
-              <h3 className="text-[13px] font-bold text-slate-200 mb-1.5">How it works</h3>
-              <p className="text-[11px] text-slate-400 leading-relaxed">
-                Post a lost or found item. Our system auto-matches similar items. Claim items securely, and contact details unlock only after the owner accepts the claim.
-              </p>
+          <div className="flex flex-col md:flex-row gap-6 md:items-end justify-between mb-8">
+            <div>
+              <h2 className="text-lg md:text-2xl font-bold text-white mb-2 flex items-center gap-2">
+                <Sparkles className="w-5 h-5 md:w-6 md:h-6 text-amber-400" /> Welcome to KGP Find
+              </h2>
+              <p className="text-xs md:text-sm text-slate-400">The smart, secure way to recover your lost belongings on campus.</p>
             </div>
-
-            {/* Safety & Trust */}
-            <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.05] hover:bg-white/[0.04] transition-colors">
-              <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center mb-3">
-                <Shield className="w-4 h-4" />
-              </div>
-              <h3 className="text-[13px] font-bold text-slate-200 mb-1.5">100% Secure & Private</h3>
-              <p className="text-[11px] text-slate-400 leading-relaxed">
-                Strictly restricted to @iitkgp.ac.in emails. Post anonymously to protect your identity. Your WhatsApp number remains completely private until you approve a claim.
-              </p>
-            </div>
-
             {/* Impact Stats */}
-            <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.05] hover:bg-white/[0.04] transition-colors">
-              <div className="w-8 h-8 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center mb-3">
-                <TrendingUp className="w-4 h-4" />
+            <div className="flex gap-6 bg-white/[0.02] border border-white/[0.05] p-3 md:px-5 md:py-3 rounded-xl shrink-0">
+              <div>
+                <div className="text-xl font-black text-white">{items.filter(i => i.status === 'RESOLVED').length + 12}</div>
+                <div className="text-[9px] text-slate-500 uppercase tracking-widest font-bold mt-0.5">Returned</div>
               </div>
-              <h3 className="text-[13px] font-bold text-slate-200 mb-1.5">Community Impact</h3>
-              <div className="flex gap-6 mt-3">
-                <div>
-                  <div className="text-xl font-black text-white">{items.filter(i => i.status === 'RESOLVED').length + 12}</div>
-                  <div className="text-[9px] text-slate-500 uppercase tracking-widest font-bold mt-0.5">Returned</div>
+              <div className="w-px bg-white/10" />
+              <div>
+                <div className="text-xl font-black text-white">{items.length + 47}</div>
+                <div className="text-[9px] text-slate-500 uppercase tracking-widest font-bold mt-0.5">Active</div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            
+            {/* How it works (Timeline) */}
+            <div className="p-5 rounded-xl bg-white/[0.02] border border-white/[0.05]">
+              <h3 className="text-sm font-bold text-slate-200 mb-5 flex items-center gap-2">
+                <Search className="w-4 h-4 text-blue-400" /> How It Works
+              </h3>
+              <div className="relative pl-5 space-y-5 before:content-[''] before:absolute before:left-[7px] before:top-2 before:bottom-2 before:w-[2px] before:bg-blue-500/20">
+                <div className="relative">
+                  <div className="absolute -left-[27px] top-1 w-3 h-3 rounded-full bg-blue-500 ring-4 ring-[#0c1322]" />
+                  <h4 className="text-xs font-bold text-slate-200">1. Post an Item</h4>
+                  <p className="text-[11px] text-slate-500 mt-1">List what you found or lost with details & images.</p>
                 </div>
-                <div className="w-px bg-white/10" />
-                <div>
-                  <div className="text-xl font-black text-white">{items.length + 47}</div>
-                  <div className="text-[9px] text-slate-500 uppercase tracking-widest font-bold mt-0.5">Active</div>
+                <div className="relative">
+                  <div className="absolute -left-[27px] top-1 w-3 h-3 rounded-full bg-blue-400 ring-4 ring-[#0c1322]" />
+                  <h4 className="text-xs font-bold text-slate-200">2. Auto-Match & Claim</h4>
+                  <p className="text-[11px] text-slate-500 mt-1">We notify you of matches. Securely file a claim with proof.</p>
+                </div>
+                <div className="relative">
+                  <div className="absolute -left-[27px] top-1 w-3 h-3 rounded-full bg-emerald-400 ring-4 ring-[#0c1322]" />
+                  <h4 className="text-xs font-bold text-slate-200">3. Connect & Return</h4>
+                  <p className="text-[11px] text-slate-500 mt-1">Once verified, contact info unlocks to complete the return.</p>
                 </div>
               </div>
             </div>
+
+            {/* Safety & Trust (Points) */}
+            <div className="p-5 rounded-xl bg-white/[0.02] border border-white/[0.05]">
+              <h3 className="text-sm font-bold text-slate-200 mb-5 flex items-center gap-2">
+                <Shield className="w-4 h-4 text-emerald-400" /> Platform Security
+              </h3>
+              <ul className="space-y-4">
+                <li className="flex items-start gap-3">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="text-xs font-bold text-slate-200">Verified KGPians Only</span>
+                    <p className="text-[11px] text-slate-500 mt-1">Strictly restricted to users with @iitkgp.ac.in emails.</p>
+                  </div>
+                </li>
+                <li className="flex items-start gap-3">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="text-xs font-bold text-slate-200">Complete Privacy Control</span>
+                    <p className="text-[11px] text-slate-500 mt-1">Post anonymously. Your WhatsApp remains hidden until you approve a claim.</p>
+                  </div>
+                </li>
+                <li className="flex items-start gap-3">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="text-xs font-bold text-slate-200">Zero Spam Guarantee</span>
+                    <p className="text-[11px] text-slate-500 mt-1">No messy WhatsApp groups. Verified claiming prevents scams & spam.</p>
+                  </div>
+                </li>
+              </ul>
+            </div>
+
           </div>
         </div>
       </div>

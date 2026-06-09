@@ -160,7 +160,7 @@ export default function Home() {
               { icon: Shield, title: 'Privacy by default', desc: 'Your contact details are never shown publicly. Only revealed when a claim is accepted.' },
               { icon: Search, title: 'Campus-aware search', desc: 'Searches understand campus synonyms. Type "Nalanda" — find posts tagged "NRSC."' },
               { icon: Flag, title: 'Report & moderate', desc: 'Flag inappropriate content instantly. Community moderation ensures a clean feed.' },
-              { icon: Image, title: 'Sensitive content blur', desc: 'Upload ID cards or sensitive photos safely. Public sees a blur, the owner sees everything.' }
+              { icon: ImageIcon, title: 'Sensitive content blur', desc: 'Upload ID cards or sensitive photos safely. Public sees a blur, the owner sees everything.' }
             ].map((feat, i) => (
               <div key={i} className="feature-card" style={{ display: 'flex', gap: '24px', alignItems: 'flex-start' }}>
                 <div style={{ width: '48px', height: '48px', flexShrink: 0, borderRadius: '12px', backgroundColor: 'var(--accent-gold-dim)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

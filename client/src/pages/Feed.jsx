@@ -365,6 +365,25 @@ export default function Feed() {
             ))}
           </div>
         </div>
+
+        {/* Features Box */}
+        <div style={{ marginTop: 'auto', paddingTop: '24px', borderTop: '1px solid var(--border-subtle)' }}>
+          <div style={{ fontSize: '13px', fontWeight: '500', color: 'var(--text-secondary)', marginBottom: '16px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Why KGP Find?</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+              <div style={{ backgroundColor: 'var(--accent-gold-dim)', color: 'var(--accent-gold)', padding: '6px', borderRadius: '8px' }}><Zap size={16} /></div>
+              <div><h4 style={{ fontSize: '13px', fontWeight: '600', marginBottom: '2px', margin: 0, color: 'var(--text-primary)' }}>Smart Matches</h4><p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.4 }}>Auto-matching system connects lost & found instantly.</p></div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+              <div style={{ backgroundColor: 'rgba(79, 142, 247, 0.1)', color: 'var(--accent-blue)', padding: '6px', borderRadius: '8px' }}><Shield size={16} /></div>
+              <div><h4 style={{ fontSize: '13px', fontWeight: '600', marginBottom: '2px', margin: 0, color: 'var(--text-primary)' }}>Privacy First</h4><p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.4 }}>Contact info hidden until claims are verified.</p></div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+              <div style={{ backgroundColor: 'rgba(247, 89, 89, 0.1)', color: 'var(--accent-red)', padding: '6px', borderRadius: '8px' }}><Lock size={16} /></div>
+              <div><h4 style={{ fontSize: '13px', fontWeight: '600', marginBottom: '2px', margin: 0, color: 'var(--text-primary)' }}>KGP Exclusive</h4><p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.4 }}>Only @iitkgp emails. 100% spam-free.</p></div>
+            </div>
+          </div>
+        </div>
       </aside>
 
       {/* Main Content Area */}

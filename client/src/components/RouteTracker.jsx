@@ -4,17 +4,13 @@ import { trackPageView } from '../utils/analytics';
 
 /**
  * RouteTracker — fires a page_view event on every React Router navigation.
- * 
- * GA4 only auto-tracks full page loads. In a Single Page App (SPA),
- * route changes don't trigger full loads, so we manually push page_view
- * events to the dataLayer for GTM/GA4 to pick up.
- *
- * This component renders nothing — it's purely a side-effect component.
+ * Also scrolls the window to the top on route change.
  */
 export default function RouteTracker() {
   const location = useLocation();
 
   useEffect(() => {
+    window.scrollTo(0, 0);
     trackPageView(location.pathname, document.title);
   }, [location]);
 

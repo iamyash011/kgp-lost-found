@@ -61,7 +61,7 @@ function ItemModal({ item, onClose, onActionSuccess }) {
               </div>
             )}
             
-            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(13,17,23,1), transparent)' }} />
+            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, var(--bg-secondary), transparent)' }} />
             
             <button onClick={onClose} style={{ position: 'absolute', top: '16px', right: '16px', width: '32px', height: '32px', backgroundColor: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', cursor: 'pointer' }}>
               <X size={16} />
@@ -78,7 +78,7 @@ function ItemModal({ item, onClose, onActionSuccess }) {
                   </span>
                 )}
               </div>
-              <h2 style={{ fontSize: '24px', fontWeight: '700', color: '#F0F4FF', margin: 0, lineHeight: 1.2 }}>{item.title}</h2>
+              <h2 style={{ fontSize: '24px', fontWeight: '700', color: 'var(--text-primary)', margin: 0, lineHeight: 1.2 }}>{item.title}</h2>
             </div>
           </div>
 

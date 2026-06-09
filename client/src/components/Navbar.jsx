@@ -190,9 +190,9 @@ export default function Navbar() {
 
                 {/* Profile Circle */}
                 <div className="relative group">
-                  <div style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: 'var(--accent-gold)', color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '600', cursor: 'pointer' }}>
+                  <Link to="/profile" style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: 'var(--accent-gold)', color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '600', textDecoration: 'none' }}>
                     {user.name.charAt(0).toUpperCase()}
-                  </div>
+                  </Link>
                   <div className="absolute right-0 top-10 w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200"
                        style={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-medium)', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}>
                     <div style={{ padding: '12px', borderBottom: '1px solid var(--border-subtle)' }}>
@@ -215,12 +215,58 @@ export default function Navbar() {
           </div>
 
           {/* Mobile Menu Button */}
-          <div className="md:hidden">
+          <div className="md:hidden flex items-center gap-4">
+            <button onClick={toggleTheme} style={{ background: 'transparent', border: 'none', color: '#fff' }}>
+              {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            </button>
             <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} style={{ background: 'transparent', border: 'none', color: '#fff' }}>
               {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
           </div>
         </div>
+
+        {/* Mobile Menu Overlay */}
+        {mobileMenuOpen && (
+          <div style={{
+            position: 'absolute', top: '64px', left: 0, right: 0,
+            backgroundColor: 'var(--bg-secondary)', borderBottom: '1px solid var(--border-subtle)',
+            padding: '16px 24px', boxShadow: '0 10px 30px rgba(0,0,0,0.5)', zIndex: 45
+          }}>
+            <div style={{ position: 'relative', marginBottom: '16px' }}>
+              <Search className="w-4 h-4" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+              <input type="text" placeholder="Search items, locations..."
+                value={searchVal} onChange={handleSearchChange}
+                style={{
+                  width: '100%', padding: '12px 12px 12px 36px', backgroundColor: 'var(--bg-tertiary)',
+                  border: '1px solid var(--border-subtle)', borderRadius: '12px',
+                  color: 'var(--text-primary)', fontSize: '14px', outline: 'none'
+                }}
+              />
+            </div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {isAdmin && (
+                <Link to="/admin" onClick={() => setMobileMenuOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px', backgroundColor: 'var(--accent-gold-dim)', color: 'var(--accent-gold)', borderRadius: '12px', textDecoration: 'none', fontWeight: '600', fontSize: '14px' }}>
+                  <Shield size={16} /> Admin Dashboard
+                </Link>
+              )}
+              {user ? (
+                <>
+                  <Link to="/report" onClick={() => setMobileMenuOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px', backgroundColor: 'var(--accent-blue)', color: '#fff', borderRadius: '12px', textDecoration: 'none', fontWeight: '600', fontSize: '14px' }}>
+                    <PlusCircle size={16} /> Post Item
+                  </Link>
+                  <button onClick={() => { logout(); setMobileMenuOpen(false); }} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px', backgroundColor: 'rgba(247, 89, 89, 0.1)', color: 'var(--accent-red)', border: 'none', borderRadius: '12px', cursor: 'pointer', fontWeight: '600', fontSize: '14px', textAlign: 'left' }}>
+                    Sign Out
+                  </button>
+                </>
+              ) : (
+                <Link to="/login" onClick={() => setMobileMenuOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px', backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-primary)', borderRadius: '12px', textDecoration: 'none', fontWeight: '600', fontSize: '14px' }}>
+                  Sign In
+                </Link>
+              )}
+            </div>
+          </div>
+        )}
       </nav>
 
       {/* Bottom Nav Bar (Mobile Only) */}

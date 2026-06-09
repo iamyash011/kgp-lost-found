@@ -1,6 +1,6 @@
 import { UploadCloud, CheckCircle2, Loader2, X, AlertTriangle, Sparkles, Image as ImageIcon, Eye, EyeOff, Calendar, Shield } from 'lucide-react';
 import { useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { trackItemReport } from '../utils/analytics';
@@ -148,11 +148,17 @@ export default function ReportItem() {
       <div className="absolute top-10 left-10 w-48 h-48 bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
 
       <div className="bg-[#0d1424]/80 backdrop-blur-xl border border-white/[0.06] rounded-2xl p-6 sm:p-8 shadow-2xl relative z-10">
+        {/* Back Button */}
+        <Link to="/" className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-400 hover:text-white transition-colors mb-6 decoration-none">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+          Back to Feed
+        </Link>
+
         {/* Header */}
         <div className="flex justify-between items-start mb-6">
           <div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight font-heading">
-              Report an Item
+              Post an Item
             </h1>
             <p className="text-slate-500 mt-1 text-sm">
               Detailed descriptions enable better matching.
@@ -406,7 +412,7 @@ export default function ReportItem() {
           <button type="submit" disabled={loading}
             className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-emerald-600 hover:from-blue-500 hover:to-emerald-500 disabled:opacity-50 text-white font-bold text-sm py-3.5 rounded-xl shadow-lg active:scale-[0.99] transition-all cursor-pointer">
             {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-            {loading ? 'Publishing Report...' : 'Submit Report'}
+            {loading ? 'Publishing Post...' : 'Submit Post'}
           </button>
         </form>
       </div>

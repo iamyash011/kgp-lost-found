@@ -208,7 +208,7 @@ export default function Feed() {
 
 
   return (
-    <div className="page-container" style={{ padding: '40px 24px', display: 'flex', gap: '32px' }}>
+    <div className="page-container flex flex-col lg:flex-row gap-8" style={{ paddingTop: '40px' }}>
       
       {/* Left Sidebar (Desktop) */}
       <aside style={{ width: '260px', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: '32px' }} className="hidden lg:flex">
@@ -282,7 +282,7 @@ export default function Feed() {
         {loading ? (
           <div style={{ textAlign: 'center', padding: '64px', color: 'var(--text-muted)' }}>Loading items...</div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 280px), 1fr))', gap: '20px' }}>
             {filteredItems.map(item => (
               <ItemCard key={item.id} item={item} searchQuery={searchQuery} onClick={() => setSelectedItem(item)} onReport={setItemToReport} />
             ))}

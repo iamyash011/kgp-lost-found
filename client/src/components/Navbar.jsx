@@ -115,33 +115,46 @@ export default function Navbar() {
         position: 'sticky',
         top: 0,
         zIndex: 50,
-        height: '64px',
-        backgroundColor: 'rgba(5, 7, 15, 0.8)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
-        borderBottom: scrolled ? '1px solid rgba(255, 255, 255, 0.06)' : '1px solid transparent',
-        transition: 'border-color 0.3s ease'
+        height: '72px',
+        backgroundColor: 'var(--bg-primary)',
+        borderBottom: scrolled ? '1px solid var(--border-subtle)' : '1px solid transparent',
+        transition: 'border-color 0.3s ease, box-shadow 0.3s ease',
+        boxShadow: scrolled ? '0 4px 6px -1px rgba(0, 0, 0, 0.05)' : 'none'
       }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 24px', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           
-          {/* Brand */}
-          <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
-            <Logo />
-            <span style={{ fontFamily: 'var(--font-heading)', fontSize: '20px', fontWeight: '800', letterSpacing: '-0.03em' }}>
-              <span style={{ color: 'var(--accent-gold)' }}>KGP</span>
-              <span style={{ color: '#ffffff' }}> Find</span>
-            </span>
-          </Link>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
+            {/* Brand */}
+            <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
+              <Logo />
+              <span style={{ fontFamily: 'var(--font-heading)', fontSize: '22px', fontWeight: '900', letterSpacing: '-0.04em' }}>
+                <span style={{ color: 'var(--accent-gold)' }}>KGP</span>
+                <span style={{ color: 'var(--text-primary)' }}> Find</span>
+              </span>
+            </Link>
+
+            {/* Desktop Navigation Links */}
+            <div className="hidden md:flex items-center gap-6" style={{ marginTop: '2px' }}>
+              <Link to="/" style={{ color: location.pathname === '/' ? 'var(--text-primary)' : 'var(--text-secondary)', fontWeight: location.pathname === '/' ? '600' : '500', fontSize: '15px', textDecoration: 'none', transition: 'color 0.2s' }}>Home</Link>
+              <Link to="/feed" style={{ color: location.pathname === '/feed' ? 'var(--text-primary)' : 'var(--text-secondary)', fontWeight: location.pathname === '/feed' ? '600' : '500', fontSize: '15px', textDecoration: 'none', transition: 'color 0.2s' }}>Explore Feed</Link>
+            </div>
+          </div>
 
           {/* Desktop Nav Actions */}
           <div className="hidden md:flex items-center gap-6">
-            <button onClick={toggleTheme} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.7)' }}>
+            {user && (
+              <Link to="/report" className="btn-gold" style={{ padding: '8px 16px', fontSize: '14px', borderRadius: '6px', height: '36px' }}>
+                <PlusCircle size={16} /> Post Item
+              </Link>
+            )}
+            
+            <button onClick={toggleTheme} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}>
               {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
             </button>
             
             {user ? (
               <div className="flex items-center gap-4 relative" ref={notifRef}>
-                <button onClick={() => setShowNotif(!showNotif)} style={{ position: 'relative', background: 'transparent', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.8)' }}>
+                <button onClick={() => setShowNotif(!showNotif)} style={{ position: 'relative', background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}>
                   <Bell className="w-5 h-5" />
                   {unreadCount > 0 && (
                     <span className="animate-wobble" style={{ position: 'absolute', top: '-2px', right: '-2px', width: '8px', height: '8px', backgroundColor: 'var(--accent-red)', borderRadius: '50%' }} />
@@ -190,13 +203,13 @@ export default function Navbar() {
 
                 {/* Profile Circle */}
                 <div className="relative group">
-                  <Link to="/profile" style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: 'var(--accent-gold)', color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '600', textDecoration: 'none' }}>
+                  <Link to="/profile" style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: 'var(--accent-gold-dim)', color: 'var(--accent-gold)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '700', textDecoration: 'none', border: '1px solid var(--accent-gold)' }}>
                     {user.name.charAt(0).toUpperCase()}
                   </Link>
                   <div className="absolute right-0 top-10 w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200"
-                       style={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-medium)', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}>
+                       style={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-medium)', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}>
                     <div style={{ padding: '12px', borderBottom: '1px solid var(--border-subtle)' }}>
-                      <div style={{ fontWeight: '600', fontSize: '14px' }}>{user.name}</div>
+                      <div style={{ fontWeight: '600', fontSize: '14px', color: 'var(--text-primary)' }}>{user.name}</div>
                       <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{user.email}</div>
                     </div>
                     {isAdmin && (
@@ -208,7 +221,7 @@ export default function Navbar() {
                 </div>
               </div>
             ) : (
-              <Link to="/login" style={{ fontSize: '15px', fontWeight: '600', color: '#ffffff', textDecoration: 'none', opacity: 0.8, transition: 'opacity 0.2s' }} onMouseEnter={e=>e.target.style.opacity=1} onMouseLeave={e=>e.target.style.opacity=0.8}>
+              <Link to="/login" style={{ fontSize: '15px', fontWeight: '600', color: 'var(--text-primary)', textDecoration: 'none', transition: 'opacity 0.2s' }}>
                 Sign in
               </Link>
             )}
@@ -216,10 +229,10 @@ export default function Navbar() {
 
           {/* Mobile Menu Button */}
           <div className="md:hidden flex items-center gap-4">
-            <button onClick={toggleTheme} style={{ background: 'transparent', border: 'none', color: '#fff' }}>
+            <button onClick={toggleTheme} style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)' }}>
               {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
             </button>
-            <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} style={{ background: 'transparent', border: 'none', color: '#fff' }}>
+            <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)' }}>
               {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
           </div>

@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import RouteTracker from './components/RouteTracker';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
+import Home from './pages/Home';
 import Feed from './pages/Feed';
 import ReportItem from './pages/ReportItem';
 import Login from './pages/Login';
@@ -26,12 +27,13 @@ function AdminRoute({ children }) {
 function App() {
   return (
     <ThemeProvider>
-      <div className="min-h-screen flex flex-col bg-[var(--bg-page)] text-[var(--text-primary)] transition-colors duration-300">
+      <div className="min-h-screen flex flex-col bg-[var(--bg-page)] text-[var(--text-primary)] transition-colors duration-300 font-sans">
         <RouteTracker />
         <Navbar />
-        <main className="relative z-10 flex-1">
+        <main className="relative z-10 flex-1 flex flex-col">
           <Routes>
-            <Route path="/" element={<Feed />} />
+            <Route path="/" element={<Home />} />
+            <Route path="/feed" element={<Feed />} />
             <Route path="/login" element={<Login />} />
             <Route 
               path="/report" 

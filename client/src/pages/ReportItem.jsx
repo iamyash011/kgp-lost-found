@@ -140,16 +140,15 @@ export default function ReportItem() {
     }
   };
 
-  const inputClass = "w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-3 text-white placeholder:text-slate-600 focus:outline-none focus:border-blue-500/40 focus:ring-1 focus:ring-blue-500/20 transition-all text-xs font-medium";
-  const labelClass = "block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1.5";
+  const inputClass = "w-full bg-[var(--bg-primary)] border border-[var(--border-medium)] rounded-xl px-4 py-3 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-gold)] focus:ring-1 focus:ring-[var(--accent-gold)] transition-all text-sm font-medium";
+  const labelClass = "block text-[11px] font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-1.5";
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10 relative">
-      <div className="absolute top-10 left-10 w-48 h-48 bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
 
-      <div className="bg-[#0d1424]/80 backdrop-blur-xl border border-white/[0.06] rounded-2xl p-6 sm:p-8 shadow-2xl relative z-10">
+      <div className="bg-[var(--bg-secondary)] border border-[var(--border-subtle)] rounded-2xl p-6 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative z-10">
         {/* Back Button */}
-        <Link to="/" className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-400 hover:text-white transition-colors mb-6 decoration-none">
+        <Link to="/" className="inline-flex items-center gap-1.5 text-sm font-bold text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors mb-6 decoration-none">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
           Back to Feed
         </Link>
@@ -157,36 +156,38 @@ export default function ReportItem() {
         {/* Header */}
         <div className="flex justify-between items-start mb-6">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight font-heading">
+            <h1 className="text-3xl sm:text-4xl font-extrabold text-[var(--text-primary)] tracking-tight font-heading">
               Post an Item
             </h1>
-            <p className="text-slate-500 mt-1 text-sm">
+            <p className="text-[var(--text-secondary)] mt-2 text-sm">
               Detailed descriptions enable better matching.
             </p>
           </div>
-          <div className="p-2.5 bg-blue-500/10 border border-blue-500/15 rounded-xl">
-            <Sparkles className="w-5 h-5 text-blue-400" />
+          <div className="p-3 bg-[var(--accent-gold-dim)] rounded-xl">
+            <Sparkles className="w-6 h-6" style={{ color: 'var(--accent-gold)' }} />
           </div>
         </div>
 
         {error && (
-          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/15 rounded-xl flex items-start gap-3">
-            <AlertTriangle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
-            <p className="text-xs text-red-300 leading-normal font-medium">{error}</p>
+          <div className="mb-6 p-4 bg-[var(--accent-red)]/10 border border-[var(--accent-red)]/20 rounded-xl flex items-start gap-3">
+            <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" style={{ color: 'var(--accent-red)' }} />
+            <p className="text-sm leading-normal font-medium" style={{ color: 'var(--accent-red)' }}>{error}</p>
           </div>
         )}
         
         {/* Type toggle */}
-        <div className="flex bg-white/[0.03] p-1 rounded-xl mb-8 w-fit border border-white/[0.06]">
+        <div className="flex bg-[var(--bg-tertiary)] p-1 rounded-xl mb-8 w-fit border border-[var(--border-subtle)]">
           <button 
             type="button" onClick={() => setType('LOST')}
-            className={`px-6 sm:px-8 py-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${type === 'LOST' ? 'bg-red-500/20 text-red-300 shadow-sm' : 'text-slate-500 hover:text-white'}`}
+            className={`px-6 sm:px-8 py-2.5 rounded-lg text-sm font-bold transition-all cursor-pointer ${type === 'LOST' ? 'bg-white shadow-sm text-[var(--text-primary)]' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}`}
+            style={type === 'LOST' ? { color: 'var(--accent-red)' } : {}}
           >
             I Lost Something
           </button>
           <button 
             type="button" onClick={() => setType('FOUND')}
-            className={`px-6 sm:px-8 py-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${type === 'FOUND' ? 'bg-emerald-500/20 text-emerald-300 shadow-sm' : 'text-slate-500 hover:text-white'}`}
+            className={`px-6 sm:px-8 py-2.5 rounded-lg text-sm font-bold transition-all cursor-pointer ${type === 'FOUND' ? 'bg-white shadow-sm text-[var(--text-primary)]' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}`}
+            style={type === 'FOUND' ? { color: 'var(--accent-gold)' } : {}}
           >
             I Found Something
           </button>
@@ -200,30 +201,30 @@ export default function ReportItem() {
               onDragOver={(e) => e.preventDefault()}
               onDrop={(e) => { e.preventDefault(); setError(''); addFiles(Array.from(e.dataTransfer.files)); }}
               onClick={() => fileInputRef.current?.click()}
-              className="border-2 border-dashed border-white/[0.08] hover:border-blue-500/30 transition-all rounded-xl p-6 flex flex-col items-center justify-center bg-white/[0.02] cursor-pointer group hover:bg-white/[0.04]"
+              className="border-2 border-dashed border-[var(--border-medium)] hover:border-[var(--accent-gold)] transition-all rounded-xl p-8 flex flex-col items-center justify-center bg-[var(--bg-tertiary)] cursor-pointer group"
             >
               <input type="file" ref={fileInputRef} multiple accept="image/*" onChange={handleFileChange} className="hidden" />
-              <div className="w-10 h-10 bg-blue-500/10 rounded-full flex items-center justify-center mb-2 group-hover:scale-105 transition-transform border border-blue-500/15">
-                <UploadCloud className="w-5 h-5 text-blue-400" />
+              <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mb-3 group-hover:scale-105 transition-transform shadow-sm border border-[var(--border-subtle)]">
+                <UploadCloud className="w-6 h-6" style={{ color: 'var(--accent-gold)' }} />
               </div>
-              <p className="text-slate-300 font-semibold text-xs mb-0.5">Click or drag images to upload</p>
-              <p className="text-slate-600 text-[10px]">JPEG, PNG, WEBP, or GIF</p>
+              <p className="text-[var(--text-primary)] font-semibold text-sm mb-1">Click or drag images to upload</p>
+              <p className="text-[var(--text-secondary)] text-xs">JPEG, PNG, WEBP, or GIF</p>
             </div>
           </div>
 
           {/* Thumbnails */}
           {selectedFiles.length > 0 && (
-            <div className="grid grid-cols-3 gap-3 bg-white/[0.02] p-3 border border-white/[0.06] rounded-xl">
+            <div className="grid grid-cols-3 gap-4 bg-[var(--bg-tertiary)] p-4 border border-[var(--border-subtle)] rounded-xl">
               {selectedFiles.map((item, idx) => (
-                <div key={idx} className="relative aspect-video rounded-lg overflow-hidden border border-white/[0.08] bg-slate-950 group/thumb">
+                <div key={idx} className="relative aspect-video rounded-lg overflow-hidden border border-[var(--border-medium)] bg-black group/thumb">
                   <img src={item.previewUrl} alt={`preview-${idx}`} className="w-full h-full object-cover" />
-                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover/thumb:opacity-100 transition-opacity flex items-center justify-center">
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/thumb:opacity-100 transition-opacity flex items-center justify-center">
                     <button type="button" onClick={(e) => { e.stopPropagation(); removeFile(idx); }}
-                      className="p-1.5 bg-red-600 hover:bg-red-500 text-white rounded-full cursor-pointer">
-                      <X className="w-3 h-3" />
+                      className="p-2 bg-[var(--accent-red)] hover:bg-red-600 text-white rounded-full cursor-pointer shadow-lg">
+                      <X className="w-4 h-4" />
                     </button>
                   </div>
-                  <div className="absolute bottom-1.5 left-1.5 bg-black/70 backdrop-blur-sm px-1.5 py-0.5 rounded text-[9px] text-slate-300 font-medium">
+                  <div className="absolute bottom-2 left-2 bg-black/70 backdrop-blur-sm px-2 py-1 rounded text-[10px] text-white font-medium">
                     {item.file.size < 1024 * 1024 
                       ? `${(item.file.size / 1024).toFixed(0)} KB` 
                       : `${(item.file.size / (1024 * 1024)).toFixed(1)} MB`}
@@ -256,11 +257,11 @@ export default function ReportItem() {
                 onBlur={() => setTimeout(() => setShowTitleSuggestions(false), 200)}
                 placeholder="e.g. Milton Water Bottle, ID Card" className={`${inputClass} relative z-20`} />
               {showTitleSuggestions && titleSuggestions.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-[#0f1729] border border-white/10 rounded-xl shadow-xl overflow-hidden z-30">
+                <div className="absolute top-full left-0 right-0 mt-1 bg-[var(--bg-secondary)] border border-[var(--border-medium)] rounded-xl shadow-lg overflow-hidden z-30">
                   <ul className="max-h-48 overflow-y-auto">
                     {titleSuggestions.map((t) => (
                       <li key={t} onMouseDown={(e) => { e.preventDefault(); setFormData(prev => ({ ...prev, title: t })); setShowTitleSuggestions(false); }}
-                        className="px-4 py-2.5 text-xs text-slate-300 hover:bg-white/5 cursor-pointer font-medium transition-colors">{t}</li>
+                        className="px-4 py-3 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] cursor-pointer font-medium transition-colors">{t}</li>
                     ))}
                   </ul>
                 </div>
@@ -272,17 +273,17 @@ export default function ReportItem() {
               <div>
                 <label className={labelClass}>Category</label>
                 <select name="category" value={formData.category} onChange={handleChange}
-                  className={`${inputClass} appearance-none cursor-pointer`}>
-                  <option value="" className="bg-[#0f1729] text-white">Select category...</option>
-                  {CATEGORIES.map(c => <option key={c} value={c} className="bg-[#0f1729] text-white">{c}</option>)}
+                  className={`${inputClass} appearance-none cursor-pointer bg-no-repeat`} style={{ backgroundImage: 'url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%231A202C%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E")', backgroundPosition: 'right 16px top 50%', backgroundSize: '12px auto' }}>
+                  <option value="">Select category...</option>
+                  {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
               <div>
                 <label className={labelClass}>Color</label>
                 <select name="color" value={formData.color} onChange={handleChange}
-                  className={`${inputClass} appearance-none cursor-pointer`}>
-                  <option value="" className="bg-[#0f1729] text-white">Select color...</option>
-                  {COLORS.map(c => <option key={c} value={c} className="bg-[#0f1729] text-white">{c}</option>)}
+                  className={`${inputClass} appearance-none cursor-pointer bg-no-repeat`} style={{ backgroundImage: 'url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%231A202C%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E")', backgroundPosition: 'right 16px top 50%', backgroundSize: '12px auto' }}>
+                  <option value="">Select color...</option>
+                  {COLORS.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
             </div>
@@ -322,11 +323,11 @@ export default function ReportItem() {
                   onBlur={() => setTimeout(() => setShowLocSuggestions(false), 200)}
                   placeholder="e.g. Nalanda Classroom Complex" className={`${inputClass} relative z-20`} />
                 {showLocSuggestions && locationSuggestions.length > 0 && (
-                  <div className="absolute top-full left-0 right-0 mt-1 bg-[#0f1729] border border-white/10 rounded-xl shadow-xl overflow-hidden z-30">
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-[var(--bg-secondary)] border border-[var(--border-medium)] rounded-xl shadow-lg overflow-hidden z-30">
                     <ul className="max-h-48 overflow-y-auto">
                       {locationSuggestions.map((loc) => (
                         <li key={loc} onMouseDown={(e) => { e.preventDefault(); setFormData(prev => ({ ...prev, location: loc })); setShowLocSuggestions(false); }}
-                          className="px-4 py-2.5 text-xs text-slate-300 hover:bg-white/5 cursor-pointer font-medium transition-colors">{loc}</li>
+                          className="px-4 py-3 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] cursor-pointer font-medium transition-colors">{loc}</li>
                       ))}
                     </ul>
                   </div>
@@ -365,53 +366,53 @@ export default function ReportItem() {
           </div>
 
           {/* ── Privacy Settings ────────────────────────── */}
-          <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-5 space-y-4">
+          <div className="bg-[var(--bg-tertiary)] border border-[var(--border-subtle)] rounded-xl p-6 space-y-5">
             <div className="flex items-center gap-2 mb-1">
-              <Shield className="w-4 h-4 text-blue-400" />
-              <h3 className="text-xs font-bold text-white uppercase tracking-wider">Privacy Settings</h3>
+              <Shield className="w-5 h-5 text-[var(--accent-gold)]" />
+              <h3 className="text-sm font-bold text-[var(--text-primary)] uppercase tracking-wider">Privacy Settings</h3>
             </div>
-            <p className="text-[10px] text-slate-500 -mt-2">Control what's visible publicly. Your info stays hidden until someone's claim is accepted.</p>
+            <p className="text-xs text-[var(--text-secondary)] -mt-2">Control what's visible publicly. Your info stays hidden until someone's claim is accepted.</p>
 
-            <label className="flex items-center justify-between p-3 bg-white/[0.02] border border-white/[0.05] rounded-xl cursor-pointer group hover:border-white/10 transition-all">
-              <div className="flex items-center gap-3">
-                {showName ? <Eye className="w-4 h-4 text-emerald-400" /> : <EyeOff className="w-4 h-4 text-slate-600" />}
+            <label className="flex items-center justify-between p-4 bg-[var(--bg-secondary)] border border-[var(--border-subtle)] rounded-xl cursor-pointer group hover:border-[var(--border-medium)] transition-all">
+              <div className="flex items-center gap-4">
+                {showName ? <Eye className="w-5 h-5" style={{ color: 'var(--accent-gold)' }} /> : <EyeOff className="w-5 h-5 text-[var(--text-muted)]" />}
                 <div>
-                  <p className="text-xs text-white font-semibold">Show my name publicly</p>
-                  <p className="text-[10px] text-slate-500">{showName ? 'Your name is visible' : 'Shows as "Verified Campus User"'}</p>
+                  <p className="text-sm text-[var(--text-primary)] font-semibold">Show my name publicly</p>
+                  <p className="text-xs text-[var(--text-secondary)]">{showName ? 'Your name is visible' : 'Shows as "Verified Campus User"'}</p>
                 </div>
               </div>
-              <div className={`w-10 h-5 rounded-full transition-all relative cursor-pointer ${showName ? 'bg-emerald-500' : 'bg-white/10'}`}
+              <div className={`w-12 h-6 rounded-full transition-all relative cursor-pointer ${showName ? 'bg-[var(--accent-gold)]' : 'bg-[var(--border-medium)]'}`}
                 onClick={(e) => { e.preventDefault(); setShowName(!showName); }}>
-                <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all shadow ${showName ? 'left-5.5' : 'left-0.5'}`} />
+                <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full transition-all shadow-sm ${showName ? 'left-6.5' : 'left-0.5'}`} />
               </div>
             </label>
 
-            <label className="flex items-center justify-between p-3 bg-white/[0.02] border border-white/[0.05] rounded-xl cursor-pointer group hover:border-white/10 transition-all">
-              <div className="flex items-center gap-3">
-                {showWhatsapp ? <Eye className="w-4 h-4 text-emerald-400" /> : <EyeOff className="w-4 h-4 text-slate-600" />}
+            <label className="flex items-center justify-between p-4 bg-[var(--bg-secondary)] border border-[var(--border-subtle)] rounded-xl cursor-pointer group hover:border-[var(--border-medium)] transition-all">
+              <div className="flex items-center gap-4">
+                {showWhatsapp ? <Eye className="w-5 h-5" style={{ color: 'var(--accent-gold)' }} /> : <EyeOff className="w-5 h-5 text-[var(--text-muted)]" />}
                 <div>
-                  <p className="text-xs text-white font-semibold">Show my WhatsApp publicly</p>
-                  <p className="text-[10px] text-slate-500">{showWhatsapp ? 'Your number is visible to all' : 'Hidden until claim accepted'}</p>
+                  <p className="text-sm text-[var(--text-primary)] font-semibold">Show my WhatsApp publicly</p>
+                  <p className="text-xs text-[var(--text-secondary)]">{showWhatsapp ? 'Your number is visible to all' : 'Hidden until claim accepted'}</p>
                 </div>
               </div>
-              <div className={`w-10 h-5 rounded-full transition-all relative cursor-pointer ${showWhatsapp ? 'bg-emerald-500' : 'bg-white/10'}`}
+              <div className={`w-12 h-6 rounded-full transition-all relative cursor-pointer ${showWhatsapp ? 'bg-[var(--accent-gold)]' : 'bg-[var(--border-medium)]'}`}
                 onClick={(e) => { e.preventDefault(); setShowWhatsapp(!showWhatsapp); }}>
-                <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all shadow ${showWhatsapp ? 'left-5.5' : 'left-0.5'}`} />
+                <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full transition-all shadow-sm ${showWhatsapp ? 'left-6.5' : 'left-0.5'}`} />
               </div>
             </label>
           </div>
 
           {/* Info note */}
-          <div className="bg-blue-500/5 border border-blue-500/10 rounded-xl p-4 flex items-start gap-3">
-            <CheckCircle2 className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
-            <p className="text-[10px] text-slate-400 leading-relaxed">
-              Your contact number <strong className="text-white">{user?.whatsappNumber || 'Not Set'}</strong> is linked to this report. It will only be shared when you accept a claim.
+          <div className="bg-[var(--accent-gold-dim)] border border-[var(--accent-gold)]/20 rounded-xl p-4 flex items-start gap-3">
+            <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5" style={{ color: 'var(--accent-gold)' }} />
+            <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
+              Your contact number <strong className="text-[var(--text-primary)]">{user?.whatsappNumber || 'Not Set'}</strong> is linked to this report. It will only be shared when you accept a claim.
             </p>
           </div>
 
           <button type="submit" disabled={loading}
-            className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-emerald-600 hover:from-blue-500 hover:to-emerald-500 disabled:opacity-50 text-white font-bold text-sm py-3.5 rounded-xl shadow-lg active:scale-[0.99] transition-all cursor-pointer">
-            {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+            className="w-full flex items-center justify-center gap-2 bg-[var(--accent-gold)] hover:brightness-110 disabled:opacity-50 text-white font-bold text-base py-4 rounded-xl shadow-md active:scale-[0.99] transition-all cursor-pointer">
+            {loading && <Loader2 className="w-5 h-5 animate-spin" />}
             {loading ? 'Publishing Post...' : 'Submit Post'}
           </button>
         </form>

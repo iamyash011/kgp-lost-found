@@ -154,136 +154,7 @@ function ItemModal({ item, onClose, onActionSuccess }) {
   );
 }
 
-// ═══════════════════════════════════════════════════════
-// Landing Page (Pre-Login)
-// ═══════════════════════════════════════════════════════
-function LandingPage({ items }) {
-  const activeCount = items.length;
-  const returnedCount = items.filter(i => i.status === 'RESOLVED').length + 247; // Fake base for presentation
 
-  return (
-    <div>
-      {/* Hero Section */}
-      <section style={{ position: 'relative', minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '120px 24px' }}>
-        <div className="hero-bg" style={{ position: 'absolute', inset: 0, zIndex: -2 }} />
-        <div className="hero-overlay" style={{ position: 'absolute', inset: 0, zIndex: -1 }} />
-        
-        <div style={{ maxWidth: '800px', margin: '0 auto', textAlign: 'center', zIndex: 10 }} className="stagger-1 animate-slide-up">
-          <div style={{ display: 'inline-block', border: '1px solid var(--accent-gold)', borderRadius: '999px', padding: '6px 16px', fontSize: '12px', fontWeight: '500', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--accent-gold)', marginBottom: '32px' }}>
-            🔒 Exclusive to IIT Kharagpur
-          </div>
-          
-          <h1 className="font-heading" style={{ fontSize: 'clamp(48px, 6vw, 72px)', fontWeight: '800', lineHeight: 1.1, color: '#F0F4FF', margin: '0 0 24px 0' }}>
-            Lost it on campus?<br/>
-            <span style={{ color: 'var(--accent-gold)' }}>Someone found it.</span>
-          </h1>
-          
-          <p style={{ fontSize: '16px', color: 'var(--text-secondary)', maxWidth: '480px', margin: '0 auto 40px auto', lineHeight: 1.6 }}>
-            The only lost-and-found platform built exclusively for KGPians. Secure, smart, and takes 60 seconds to report.
-          </p>
-          
-          <Link to="/login" className="btn-gold" style={{ padding: '16px 32px', fontSize: '16px' }}>
-            Sign in with Google <span style={{ marginLeft: '4px' }}>→</span>
-          </Link>
-          
-          <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '20px' }}>
-            @iitkgp.ac.in login only · No spam, ever
-          </p>
-        </div>
-
-        <div className="animate-pulse-subtle" style={{ position: 'absolute', bottom: '40px', left: '50%', transform: 'translateX(-50%)', color: 'var(--text-muted)' }}>
-          ↓
-        </div>
-      </section>
-
-      {/* Live Stats Bar */}
-      <div className="stat-bar" style={{ position: 'sticky', top: '64px', zIndex: 40 }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '16px 24px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '24px', alignItems: 'center' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div className="animate-pulse-dot" style={{ width: '8px', height: '8px', backgroundColor: '#34D399', borderRadius: '50%' }} />
-            <div>
-              <div style={{ fontSize: '15px', fontWeight: '600', color: 'var(--text-primary)' }}>Platform live</div>
-              <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Last match: 4m ago</div>
-            </div>
-          </div>
-          <div style={{ borderLeft: '1px solid rgba(255,255,255,0.07)', paddingLeft: '24px' }}>
-            <div className="font-heading" style={{ fontSize: '28px', fontWeight: '700', color: 'var(--text-primary)' }}>{returnedCount}</div>
-            <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>items recovered this semester</div>
-          </div>
-          <div style={{ borderLeft: '1px solid rgba(255,255,255,0.07)', paddingLeft: '24px' }}>
-            <div className="font-heading" style={{ fontSize: '28px', fontWeight: '700', color: 'var(--text-primary)' }}>{activeCount}</div>
-            <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>active searches right now</div>
-          </div>
-        </div>
-      </div>
-
-      <div className="page-container" style={{ padding: '120px 24px' }}>
-        {/* How It Works */}
-        <section style={{ marginBottom: '120px' }}>
-          <div style={{ textAlign: 'center', marginBottom: '64px' }}>
-            <h2 className="font-heading" style={{ fontSize: '36px', fontWeight: '700', margin: '0 0 16px 0' }}>How KGP Find works</h2>
-            <p style={{ fontSize: '16px', color: 'var(--text-secondary)' }}>Report in seconds. Get matched automatically. Reclaim your stuff.</p>
-          </div>
-          
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '32px', position: 'relative' }}>
-            {/* Step 1 */}
-            <div style={{ position: 'relative', padding: '32px' }}>
-              <div className="font-heading" style={{ position: 'absolute', top: 0, right: '20px', fontSize: '120px', fontWeight: '800', color: 'var(--accent-gold)', opacity: 0.05, lineHeight: 1 }}>1</div>
-              <Search size={28} color="var(--accent-gold)" style={{ marginBottom: '24px' }} />
-              <h3 style={{ fontSize: '17px', fontWeight: '600', marginBottom: '12px' }}>Post your item</h3>
-              <p style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: 1.6 }}>Describe what you lost or found. Takes under a minute. No account setup required — just your IIT email.</p>
-            </div>
-            {/* Step 2 */}
-            <div style={{ position: 'relative', padding: '32px' }}>
-              <div className="font-heading" style={{ position: 'absolute', top: 0, right: '20px', fontSize: '120px', fontWeight: '800', color: 'var(--accent-gold)', opacity: 0.05, lineHeight: 1 }}>2</div>
-              <Zap size={28} color="var(--accent-gold)" style={{ marginBottom: '24px' }} />
-              <h3 style={{ fontSize: '17px', fontWeight: '600', marginBottom: '12px' }}>Auto-matching kicks in</h3>
-              <p style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: 1.6 }}>Our algorithm instantly scans all active posts and calculates match confidence across category, date, and keywords.</p>
-            </div>
-            {/* Step 3 */}
-            <div style={{ position: 'relative', padding: '32px' }}>
-              <div className="font-heading" style={{ position: 'absolute', top: 0, right: '20px', fontSize: '120px', fontWeight: '800', color: 'var(--accent-gold)', opacity: 0.05, lineHeight: 1 }}>3</div>
-              <Shield size={28} color="var(--accent-gold)" style={{ marginBottom: '24px' }} />
-              <h3 style={{ fontSize: '17px', fontWeight: '600', marginBottom: '12px' }}>Claim with proof</h3>
-              <p style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: 1.6 }}>Submit proof of ownership. The poster reviews, accepts, and only then is contact info revealed. Privacy-first by design.</p>
-            </div>
-          </div>
-        </section>
-
-        {/* Features */}
-        <section style={{ marginBottom: '120px' }}>
-          <h2 className="font-heading" style={{ fontSize: '36px', fontWeight: '700', margin: '0 0 48px 0', textAlign: 'center' }}>Everything you need. Nothing you don't.</h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
-            {[
-              { icon: Lock, title: 'KGPians only', desc: 'Login restricted to @iitkgp.ac.in domains. No anonymous posts, no external spam.' },
-              { icon: Zap, title: 'Smart auto-matching', desc: 'Post a lost item and get notified within seconds if a matching found post exists.' },
-              { icon: Shield, title: 'Privacy by default', desc: 'Contact details are never shown publicly. Only revealed when a claim is accepted.' },
-              { icon: Search, title: 'Campus-aware search', desc: 'Searches understand campus synonyms. Type "Nalanda" — find posts tagged "NRSC."' },
-              { icon: Flag, title: 'Report & moderate', desc: 'Flag inappropriate content instantly. Admins resolve reports within 24 hours.' },
-              { icon: Image, title: 'Sensitive content blur', desc: 'Mark ID cards or sensitive photos as blurred. Public sees a blur, owner sees everything.' }
-            ].map((feat, i) => (
-              <div key={i} className="feature-card">
-                <div style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: 'var(--accent-gold-dim)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
-                  <feat.icon size={20} color="var(--accent-gold)" />
-                </div>
-                <h3 style={{ fontSize: '15px', fontWeight: '600', marginBottom: '8px' }}>{feat.title}</h3>
-                <p style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>{feat.desc}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Final CTA */}
-        <section style={{ padding: '80px 0', textAlign: 'center', position: 'relative' }}>
-          <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at center, rgba(201,162,39,0.08) 0%, transparent 60%)', zIndex: -1 }} />
-          <h2 className="font-heading" style={{ fontSize: '44px', fontWeight: '800', margin: '0 0 16px 0' }}>Your lost item is probably already here.</h2>
-          <p style={{ fontSize: '16px', color: 'var(--text-secondary)', marginBottom: '40px' }}>Join 2,000+ KGPians who've already recovered what mattered.</p>
-          <Link to="/login" className="btn-gold">Sign in with Google →</Link>
-        </section>
-      </div>
-    </div>
-  );
-}
 
 // ═══════════════════════════════════════════════════════
 // Main Feed (Post-Login)
@@ -334,9 +205,7 @@ export default function Feed() {
     return true;
   });
 
-  if (!user) {
-    return <LandingPage items={items} />;
-  }
+
 
   return (
     <div className="page-container" style={{ padding: '40px 24px', display: 'flex', gap: '32px' }}>

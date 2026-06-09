@@ -1,40 +1,42 @@
 @import "tailwindcss";
 
 :root {
-  /* LIGHT THEME VARIABLES (Default) */
-  --bg-primary: #FAFBFF;
+  /* LIGHT THEME VARIABLES (Groww-inspired) */
+  --bg-primary: #FFFFFF;
   --bg-secondary: #FFFFFF;
-  --bg-tertiary: #F3F5FA;
-  --surface-glass: rgba(255, 255, 255, 0.7);
-  --border-subtle: rgba(0, 0, 0, 0.05);
-  --border-medium: rgba(0, 0, 0, 0.1);
-  --accent-gold: #A07B10;
-  --accent-gold-dim: rgba(160, 123, 16, 0.08);
-  --accent-blue: #4F8EF7;
-  --accent-red: #F75959;
-  --text-primary: #0D1117;
+  --bg-tertiary: #F8F9FA;
+  --bg-page: #F3F4F6;
+  --surface-glass: rgba(255, 255, 255, 0.95);
+  --border-subtle: #E2E8F0;
+  --border-medium: #CBD5E1;
+  --accent-gold: #00D09C; /* Groww Teal */
+  --accent-gold-dim: rgba(0, 208, 156, 0.1);
+  --accent-blue: #3182CE;
+  --accent-red: #E53E3E;
+  --text-primary: #1A202C;
   --text-secondary: #4A5568;
-  --text-muted: #8892A4;
+  --text-muted: #718096;
 
-  --font-heading: 'Syne', sans-serif;
+  --font-heading: 'Inter', sans-serif;
   --font-body: 'Inter', sans-serif;
 }
 
 [data-theme="dark"] {
-  /* DARK THEME VARIABLES */
-  --bg-primary: #05070F;
-  --bg-secondary: #0D1117;
-  --bg-tertiary: #131923;
-  --surface-glass: rgba(255, 255, 255, 0.04);
-  --border-subtle: rgba(255, 255, 255, 0.07);
-  --border-medium: rgba(255, 255, 255, 0.12);
-  --accent-gold: #C9A227;
-  --accent-gold-dim: rgba(201, 162, 39, 0.12);
-  --accent-blue: #4F8EF7;
-  --accent-red: #F75959;
-  --text-primary: #F0F4FF;
-  --text-secondary: #8892A4;
-  --text-muted: #4A5568;
+  /* Crisp Dark Theme */
+  --bg-primary: #000000;
+  --bg-secondary: #111111;
+  --bg-tertiary: #1A1A1A;
+  --bg-page: #0A0A0A;
+  --surface-glass: rgba(17, 17, 17, 0.9);
+  --border-subtle: #2D3748;
+  --border-medium: #4A5568;
+  --accent-gold: #00D09C;
+  --accent-gold-dim: rgba(0, 208, 156, 0.15);
+  --accent-blue: #63B3ED;
+  --accent-red: #FC8181;
+  --text-primary: #F7FAFC;
+  --text-secondary: #A0AEC0;
+  --text-muted: #718096;
 }
 
 /* Reset & Base */
@@ -50,7 +52,7 @@ body {
 
 h1, h2, h3, h4, h5, h6, .font-heading {
   font-family: var(--font-heading);
-  letter-spacing: -0.03em;
+  letter-spacing: -0.02em;
 }
 
 /* Typography Classes */
@@ -68,7 +70,7 @@ h1, h2, h3, h4, h5, h6, .font-heading {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--bg-tertiary);
+  background: var(--border-medium);
   border-radius: 999px;
 }
 ::-webkit-scrollbar-thumb:hover {
@@ -130,7 +132,7 @@ h1, h2, h3, h4, h5, h6, .font-heading {
 .page-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 120px 24px;
+  padding: 80px 24px;
 }
 @media (max-width: 640px) {
   .page-container {
@@ -141,66 +143,63 @@ h1, h2, h3, h4, h5, h6, .font-heading {
 /* Navbar */
 .navbar-scrolled {
   border-bottom: 1px solid var(--border-subtle);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
 
 /* Hero Elements */
 .hero-bg {
-  background-image: url('/assets/iitkgp-main-building.jpg');
-  background-size: cover;
-  background-position: center 30%;
+  /* Removed image background for cleaner Groww look */
+  background: transparent;
 }
 .hero-overlay {
-  background: linear-gradient(
-    to bottom,
-    rgba(5,7,15,0.55) 0%,
-    rgba(5,7,15,0.72) 50%,
-    rgba(5,7,15,0.97) 100%
-  );
+  background: transparent;
 }
 
 /* Buttons */
 .btn-gold {
   background-color: var(--accent-gold);
-  color: #000000;
-  padding: 14px 28px;
-  border-radius: 10px;
+  color: #FFFFFF;
+  padding: 14px 32px;
+  border-radius: 8px;
   font-family: var(--font-body);
   font-weight: 600;
-  font-size: 15px;
+  font-size: 16px;
   border: none;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  transition: transform 0.2s ease, filter 0.2s ease;
+  transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 4px 14px rgba(0, 208, 156, 0.3);
 }
 .btn-gold:hover {
-  transform: scale(1.03);
-  filter: brightness(1.1);
+  background-color: #00B88A;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0, 208, 156, 0.4);
 }
 .btn-gold:active {
-  transform: scale(0.97);
+  transform: translateY(1px);
 }
 
-/* Glass Feature Card */
+/* Glass Feature Card -> Premium Flat Card */
 .feature-card {
-  background: var(--surface-glass);
+  background: var(--bg-secondary);
   border: 1px solid var(--border-subtle);
-  border-radius: 16px;
-  padding: 24px;
-  transition: border-color 0.25s ease, background 0.25s ease;
+  border-radius: 12px;
+  padding: 32px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 .feature-card:hover {
-  border-color: rgba(201,162,39,0.25);
-  background: var(--accent-gold-dim);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.1);
+  border-color: var(--border-medium);
 }
 
 /* Stat Bar */
 .stat-bar {
-  background: rgba(13,17,23,0.85);
-  backdrop-filter: blur(12px) saturate(180%);
-  -webkit-backdrop-filter: blur(12px) saturate(180%);
-  border-top: 1px solid rgba(255,255,255,0.07);
-  border-bottom: 1px solid rgba(255,255,255,0.07);
+  background: var(--bg-primary);
+  border-top: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
 }

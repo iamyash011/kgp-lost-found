@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import RouteTracker from './components/RouteTracker';
 import Navbar from './components/Navbar';
+import Footer from './components/Footer';
 import Feed from './pages/Feed';
 import ReportItem from './pages/ReportItem';
 import Login from './pages/Login';
@@ -25,10 +26,10 @@ function AdminRoute({ children }) {
 function App() {
   return (
     <ThemeProvider>
-      <div>
+      <div className="min-h-screen flex flex-col bg-[var(--bg-page)] text-[var(--text-primary)] transition-colors duration-300">
         <RouteTracker />
         <Navbar />
-        <main className="relative z-10">
+        <main className="relative z-10 flex-1">
           <Routes>
             <Route path="/" element={<Feed />} />
             <Route path="/login" element={<Login />} />
@@ -58,6 +59,7 @@ function App() {
             />
           </Routes>
         </main>
+        <Footer />
       </div>
     </ThemeProvider>
   );

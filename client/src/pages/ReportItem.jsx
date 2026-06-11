@@ -23,6 +23,10 @@ export default function ReportItem() {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
   
+  const now = new Date();
+  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+  const maxDateTime = now.toISOString().slice(0, 16);
+  
   const [type, setType] = useState('LOST');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -64,6 +68,7 @@ export default function ReportItem() {
   const [selectedFiles, setSelectedFiles] = useState([]);
 
   const handleChange = (e) => {
+    setError('');
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
@@ -105,6 +110,14 @@ export default function ReportItem() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.title || !formData.description || !formData.location) return;
+
+    if (formData.dateOccurred) {
+      const selectedDate = new Date(formData.dateOccurred);
+      if (selectedDate > new Date()) {
+        setError('Date cannot be in the future.');
+        return;
+      }
+    }
 
     setLoading(true);
     try {
@@ -300,7 +313,7 @@ export default function ReportItem() {
                   <Calendar className="w-3 h-3 inline mr-1" />
                   {type === 'LOST' ? 'When Lost' : 'When Found'}
                 </label>
-                <input type="datetime-local" name="dateOccurred" value={formData.dateOccurred} onChange={handleChange}
+                <input type="datetime-local" name="dateOccurred" value={formData.dateOccurred} onChange={handleChange} max={maxDateTime}
                   className={inputClass} />
               </div>
             </div>

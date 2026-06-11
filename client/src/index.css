@@ -23,6 +23,7 @@
 
 [data-theme="dark"] {
   /* Crisp Dark Theme */
+  color-scheme: dark;
   --bg-primary: #000000;
   --bg-secondary: #111111;
   --bg-tertiary: #1A1A1A;

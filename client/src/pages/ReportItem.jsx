@@ -114,7 +114,7 @@ export default function ReportItem() {
     if (formData.dateOccurred) {
       const selectedDate = new Date(formData.dateOccurred);
       if (selectedDate > new Date()) {
-        setError('Date cannot be in the future.');
+        setError('Date and time cannot be in the future.');
         return;
       }
     }

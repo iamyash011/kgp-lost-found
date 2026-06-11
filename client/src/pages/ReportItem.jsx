@@ -25,7 +25,7 @@ export default function ReportItem() {
   
   const now = new Date();
   now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-  const maxDateTime = now.toISOString().slice(0, 16);
+  const maxDate = now.toISOString().slice(0, 10);
   
   const [type, setType] = useState('LOST');
   const [loading, setLoading] = useState(false);
@@ -72,12 +72,9 @@ export default function ReportItem() {
     let value = e.target.value;
 
     if (e.target.name === 'dateOccurred' && value) {
-      const selected = new Date(value);
-      if (selected > new Date()) {
-        const now = new Date();
-        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-        value = now.toISOString().slice(0, 16);
-        setError('Cannot select a future date or time. Adjusted to current time.');
+      if (value > maxDate) {
+        value = maxDate;
+        setError('Cannot select a future date. Adjusted to current date.');
       }
     }
 
@@ -124,9 +121,8 @@ export default function ReportItem() {
     if (!formData.title || !formData.description || !formData.location) return;
 
     if (formData.dateOccurred) {
-      const selectedDate = new Date(formData.dateOccurred);
-      if (selectedDate > new Date()) {
-        setError('Date and time cannot be in the future.');
+      if (formData.dateOccurred > maxDate) {
+        setError('Date cannot be in the future.');
         return;
       }
     }
@@ -325,7 +321,7 @@ export default function ReportItem() {
                   <Calendar className="w-3 h-3 inline mr-1" />
                   {type === 'LOST' ? 'When Lost' : 'When Found'}
                 </label>
-                <input type="datetime-local" name="dateOccurred" value={formData.dateOccurred} onChange={handleChange} max={maxDateTime}
+                <input type="date" name="dateOccurred" value={formData.dateOccurred} onChange={handleChange} max={maxDate}
                   className={inputClass} />
               </div>
             </div>

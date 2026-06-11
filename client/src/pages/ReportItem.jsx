@@ -69,7 +69,19 @@ export default function ReportItem() {
 
   const handleChange = (e) => {
     setError('');
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    let value = e.target.value;
+
+    if (e.target.name === 'dateOccurred' && value) {
+      const selected = new Date(value);
+      if (selected > new Date()) {
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        value = now.toISOString().slice(0, 16);
+        setError('Cannot select a future date or time. Adjusted to current time.');
+      }
+    }
+
+    setFormData({ ...formData, [e.target.name]: value });
   };
 
   const handleFileChange = (e) => {

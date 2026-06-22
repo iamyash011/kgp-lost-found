@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import RouteTracker from './components/RouteTracker';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
+import FeedbackButton from './components/FeedbackButton';
 import Home from './pages/Home';
 import Feed from './pages/Feed';
 import ReportItem from './pages/ReportItem';
@@ -63,6 +64,7 @@ function App() {
           </Routes>
         </main>
         <Footer />
+        <FeedbackButton />
         {user && <div className="md:hidden" style={{ height: '64px' }} />}
       </div>
     </ThemeProvider>

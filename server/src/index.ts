@@ -67,17 +67,18 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
 
 if (process.env.NODE_ENV !== 'production') {
   const PORT = process.env.PORT || 5000;
-  app.listen(PORT, () => {
+  app.listen(PORT, async () => {
     console.log(`✅ Server running on http://localhost:${PORT}`);
 
     // Initialize WhatsApp Bot
-    if (process.env.ENABLE_WHATSAPP_BOT !== 'false') {
-      import('./lib/whatsapp').then(({ initWhatsAppBot }) => {
-        initWhatsAppBot();
-      }).catch((err) => {
+    if (process.env.ENABLE_WHATSAPP_BOT === 'true') {
+      try {
+        const { initWhatsAppBot } = await import('./lib/whatsapp');
+        await initWhatsAppBot();
+      } catch (err: any) {
         console.error('⚠️ Failed to initialize WhatsApp Bot:', err.message);
         console.log('   Server continues without WhatsApp Bot.');
-      });
+      }
     }
   });
 }

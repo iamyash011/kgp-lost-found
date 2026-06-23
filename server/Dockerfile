@@ -16,8 +16,9 @@ ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
 
 WORKDIR /app
 
-# Copy package files
+# Copy package files and Prisma schema
 COPY package*.json ./
+COPY prisma ./prisma/
 
 # Install dependencies (ignoring dev dependencies for smaller size, but we need typescript to build)
 RUN npm install

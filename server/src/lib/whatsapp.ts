@@ -813,7 +813,7 @@ export async function initWhatsAppBot() {
   // Wait for Postgres connection to verify it works
   await pool.query('SELECT 1');
   const store = new PostgresStore({
-    client: pool
+    pool: pool
   });
 
   const client = new Client({

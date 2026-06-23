@@ -809,6 +809,11 @@ export function initWhatsAppBot() {
   client.on('qr', (qr: string) => {
     console.log('\n📱 Scan this QR code with your WhatsApp:');
     qrcode.generate(qr, { small: true });
+    
+    // Fallback for cloud logs (Render, etc.) where ASCII art gets broken by timestamps
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(qr)}`;
+    console.log('\n⚠️ If the QR code above is broken/unscannable, click this link to view it:');
+    console.log(qrUrl);
     console.log('\nWaiting for scan...\n');
   });
 

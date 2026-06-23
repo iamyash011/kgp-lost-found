@@ -3,3 +3,7 @@ node_modules
 .env
 
 /generated/prisma
+
+# WhatsApp Bot caches
+whatsapp-session/
+.wwebjs_cache/

@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import prisma from '../lib/prisma';
 import { authenticateUser } from '../middleware/auth';
+import { sendWhatsAppNotification } from '../lib/notifier';
 
 const router = Router();
 
@@ -65,15 +66,18 @@ router.post('/', async (req: Request, res: Response) => {
 
     // Notify item owner
     const claimant = await prisma.user.findUnique({ where: { id: claimantId }, select: { name: true } });
+    const claimMsg = `${claimant?.name || 'A verified student'} claims "${item.title}" might be theirs. Review their verification details.`;
     await prisma.notification.create({
       data: {
         userId: item.userId,
         type: 'CLAIM_RECEIVED',
         title: 'New Claim on Your Item',
-        message: `${claimant?.name || 'A verified student'} claims "${item.title}" might be theirs. Review their verification details.`,
+        message: claimMsg,
         relatedId: claim.id,
       },
     });
+    // Push to WhatsApp
+    await sendWhatsAppNotification(item.userId, 'New Claim on Your Item', claimMsg);
 
     res.status(201).json(claim);
   } catch (error) {
@@ -179,26 +183,32 @@ router.patch('/:id/accept', async (req: Request, res: Response) => {
     });
 
     // Notify claimant
+    const acceptMsg = `Your claim on "${claim.item.title}" has been accepted. You can now contact the other party via WhatsApp.`;
     await prisma.notification.create({
       data: {
         userId: claim.claimantId,
         type: 'CLAIM_ACCEPTED',
         title: 'Claim Accepted! 🎉',
-        message: `Your claim on "${claim.item.title}" has been accepted. You can now contact the other party via WhatsApp.`,
+        message: acceptMsg,
         relatedId: claim.id,
       },
     });
+    // Push to WhatsApp
+    await sendWhatsAppNotification(claim.claimantId, 'Claim Accepted! 🎉', acceptMsg);
 
     // Also create a CONTACT_UNLOCKED notification
+    const contactMsg = `WhatsApp contact for "${claim.item.title}" is now available. Check your accepted claims.`;
     await prisma.notification.create({
       data: {
         userId: claim.claimantId,
         type: 'CONTACT_UNLOCKED',
         title: 'Contact Unlocked',
-        message: `WhatsApp contact for "${claim.item.title}" is now available. Check your accepted claims.`,
+        message: contactMsg,
         relatedId: claim.id,
       },
     });
+    // Push to WhatsApp
+    await sendWhatsAppNotification(claim.claimantId, 'Contact Unlocked', contactMsg);
 
     res.json(updated);
   } catch (error) {
@@ -225,17 +235,20 @@ router.patch('/:id/reject', async (req: Request, res: Response) => {
       data: { status: 'REJECTED', responseNote: responseNote || null },
     });
 
+    const rejectMsg = responseNote
+      ? `Your claim on "${claim.item.title}" was not accepted. Note: "${responseNote}"`
+      : `Your claim on "${claim.item.title}" was not accepted.`;
     await prisma.notification.create({
       data: {
         userId: claim.claimantId,
         type: 'CLAIM_REJECTED',
         title: 'Claim Not Accepted',
-        message: responseNote
-          ? `Your claim on "${claim.item.title}" was not accepted. Note: "${responseNote}"`
-          : `Your claim on "${claim.item.title}" was not accepted.`,
+        message: rejectMsg,
         relatedId: claim.itemId,
       },
     });
+    // Push to WhatsApp
+    await sendWhatsAppNotification(claim.claimantId, 'Claim Not Accepted', rejectMsg);
 
     res.json(updated);
   } catch (error) {
@@ -262,15 +275,18 @@ router.patch('/:id/more-info', async (req: Request, res: Response) => {
       data: { status: 'MORE_INFO', responseNote: responseNote || 'Please provide more identifying details.' },
     });
 
+    const moreInfoMsg = `The owner of "${claim.item.title}" needs more details: "${updated.responseNote}"`;
     await prisma.notification.create({
       data: {
         userId: claim.claimantId,
         type: 'CLAIM_MORE_INFO',
         title: 'More Information Requested',
-        message: `The owner of "${claim.item.title}" needs more details: "${updated.responseNote}"`,
+        message: moreInfoMsg,
         relatedId: claim.id,
       },
     });
+    // Push to WhatsApp
+    await sendWhatsAppNotification(claim.claimantId, 'More Information Requested', moreInfoMsg);
 
     res.json(updated);
   } catch (error) {

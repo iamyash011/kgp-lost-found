@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: kgp-lost-found-backend
+    env: docker
+    rootDir: server
+    dockerfilePath: Dockerfile
+    plan: free # or starter if it runs out of memory (puppeteer is heavy)
+    envVars:
+      - key: DATABASE_URL
+        sync: false # Set this in Render Dashboard
+      - key: JWT_SECRET
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: WEBSITE_URL
+        value: https://kgpfind.vercel.app
+      - key: ENABLE_WHATSAPP_BOT
+        value: 'true'
+      - key: EMAIL_USER
+        sync: false
+      - key: EMAIL_PASS
+        sync: false

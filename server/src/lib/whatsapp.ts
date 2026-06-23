@@ -819,6 +819,7 @@ export async function initWhatsAppBot() {
   const client = new Client({
     authStrategy: new RemoteAuth({
       store: store,
+      dataPath: './',
       backupSyncIntervalMs: 60000 // Save session every minute
     }),
     webVersionCache: {

@@ -7,3 +7,8 @@ node_modules
 # WhatsApp Bot caches
 whatsapp-session/
 .wwebjs_cache/
+.wwebjs_auth/
+session-*/
+wwebjs_temp_session_*/
+RemoteAuth/
+*.zip

@@ -844,6 +844,18 @@ export async function initWhatsAppBot() {
     console.log('\nWaiting for scan...\n');
   });
 
+  client.on('authenticated', () => {
+    console.log('🔐 WhatsApp Bot authenticated successfully.');
+  });
+
+  client.on('remote_session_saved', () => {
+    console.log('💾 Remote session saved to PostgreSQL successfully!');
+  });
+
+  client.on('disconnected', (reason) => {
+    console.log('❌ WhatsApp Bot was disconnected. Reason:', reason);
+  });
+
   client.on('ready', async () => {
     console.log('✅ WhatsApp Bot is ready and connected!');
     setWhatsAppClient(client);

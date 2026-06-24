@@ -35,6 +35,7 @@ export async function findAndStoreMatches(newItem: MatchableItem) {
 
     // 1. Category match (+0.3)
     if (newItem.category && candidate.category &&
+        newItem.category !== 'Other' &&
         newItem.category.toLowerCase() === candidate.category.toLowerCase()) {
       score += 0.3;
     }

@@ -123,12 +123,9 @@ function generateOTP(): string {
 }
 
 function extractWhatsAppNumber(chatId: string): string {
-  // chatId format: 91XXXXXXXXXX@s.whatsapp.net → extract the 10-digit number
-  const match = chatId.replace('@s.whatsapp.net', '');
-  if (match.startsWith('91') && match.length === 12) {
-    return match.substring(2); // Remove country code
-  }
-  return match;
+  // chatId format: [country_code][number]@s.whatsapp.net
+  // We should preserve the country code for sending notifications later
+  return chatId.replace('@s.whatsapp.net', '');
 }
 
 function getTextFromMessage(message: proto.IMessage | null | undefined): string {

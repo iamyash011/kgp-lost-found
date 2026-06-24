@@ -30,8 +30,9 @@ export async function sendWhatsAppNotification(userId: string, title: string, me
     if (!user?.whatsappNumber) return;
 
     // Baileys expects the chatId format: countrycode + number + @s.whatsapp.net
-    // Indian numbers: 91XXXXXXXXXX@s.whatsapp.net
-    const chatId = `91${user.whatsappNumber}@s.whatsapp.net`;
+    // If it's exactly 10 digits, it's a legacy Indian number from before we saved country codes
+    const number = user.whatsappNumber.length === 10 ? `91${user.whatsappNumber}` : user.whatsappNumber;
+    const chatId = `${number}@s.whatsapp.net`;
 
     const formattedMessage = `🔔 *${title}*\n\n${message}\n\n🔗 View on website: ${WEBSITE_URL}`;
 

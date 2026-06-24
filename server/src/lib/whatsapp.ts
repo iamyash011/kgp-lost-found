@@ -261,7 +261,7 @@ async function handleMessage(sock: WASocket, chatId: string, messageBody: string
 // ─── Step Handlers ────────────────────────────────────────
 
 function getMenuMessage(): string {
-  return `📋 *KGP Lost & Found — Menu*\n\nWhat would you like to do?\n\n*1.* Report a Lost item\n*2.* Report a Found item\n*3.* View all items on website\n\nReply with *1*, *2*, or *3*.\n\n🔗 ${WEBSITE_URL}`;
+  return `📋 *KGP Lost & Found — Menu*\n\nWhat would you like to do?\n\n*1.* Report a Lost item\n*2.* Report a Found item\n*3.* View all items on website\n*4.* View my potential matches\n\nReply with *1*, *2*, *3*, or *4*.\n\n🔗 ${WEBSITE_URL}`;
 }
 
 async function handleIdle(sock: WASocket, chatId: string, session: ConversationState) {
@@ -425,8 +425,62 @@ async function handleMenu(sock: WASocket, chatId: string, body: string, session:
           `Type *menu* to go back.`
       });
       break;
+    case '4':
+      await handleViewMatches(sock, chatId, session);
+      break;
     default:
-      await sock.sendMessage(chatId, { text: `Please reply with *1*, *2*, or *3*.\n\n` + getMenuMessage() });
+      await sock.sendMessage(chatId, { text: `Please reply with *1*, *2*, *3*, or *4*.\n\n` + getMenuMessage() });
+  }
+}
+
+async function handleViewMatches(sock: WASocket, chatId: string, session: ConversationState) {
+  if (!session.userId) return;
+
+  try {
+    // Find all matches for this user's items
+    const matches = await prisma.match.findMany({
+      where: {
+        OR: [
+          { lostItem: { userId: session.userId } },
+          { foundItem: { userId: session.userId } }
+        ]
+      },
+      include: {
+        lostItem: true,
+        foundItem: true
+      },
+      orderBy: { matchScore: 'desc' },
+      take: 5
+    });
+
+    if (matches.length === 0) {
+      await sock.sendMessage(chatId, {
+        text: `🔍 *No matches found yet.*\n\n` +
+          `We will notify you automatically if a potential match is found for your items!\n\n` +
+          `Type *menu* to go back.`
+      });
+      return;
+    }
+
+    let response = `🔍 *Your Top 5 Potential Matches:*\n\n`;
+    
+    matches.forEach((match, idx) => {
+      // Determine which one is the user's item
+      const myItem = match.lostItem.userId === session.userId ? match.lostItem : match.foundItem;
+      const otherItem = match.lostItem.userId === session.userId ? match.foundItem : match.lostItem;
+      
+      const scorePercentage = Math.round(match.matchScore * 100);
+      
+      response += `*${idx + 1}.* Your ${myItem.type === 'LOST' ? 'lost' : 'found'} *${myItem.title}* may match a ${otherItem.type === 'LOST' ? 'lost' : 'found'} *${otherItem.title}* near *${otherItem.location}*.\n`;
+      response += `   *Match Score:* ${scorePercentage}%\n\n`;
+    });
+
+    response += `🔗 View details and claim items on the website: ${WEBSITE_URL}\n\nType *menu* to go back.`;
+
+    await sock.sendMessage(chatId, { text: response });
+  } catch (error) {
+    console.error('Failed to fetch matches:', error);
+    await sock.sendMessage(chatId, { text: `❌ Failed to fetch matches. Please try again later.\n\nType *menu* to go back.` });
   }
 }
 

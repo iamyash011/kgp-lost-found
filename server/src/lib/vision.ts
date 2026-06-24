@@ -56,33 +56,44 @@ export async function analyzeItemImage(buffer: Buffer, mimeType: string): Promis
   const modelsToTry = ['gemini-3.5-flash', 'gemini-2.5-flash', 'gemini-flash-latest', 'gemini-2.0-flash', 'gemini-2.5-flash-lite'];
   let lastError: any = null;
 
-  for (const modelName of modelsToTry) {
-    try {
-      const model = genAI.getGenerativeModel({ model: modelName });
-      const result = await model.generateContent([prompt, imagePart]);
-      const responseText = result.response.text().trim();
-      
-      // Clean up potential markdown formatting just in case the model ignored instructions
-      const cleanJson = responseText.replace(/```json\n?/g, '').replace(/```\n?/g, '');
-      const parsed = JSON.parse(cleanJson);
-      
-      // Validate output
-      return {
-        result: {
-          title: parsed.title || 'Found Item',
-          category: CATEGORIES.includes(parsed.category) ? parsed.category : 'Other',
-          color: COLORS.includes(parsed.color) ? parsed.color : 'Other',
-          brand: parsed.brand || '',
-        }
-      };
-    } catch (error: any) {
-      console.warn(`⚠️ Model ${modelName} failed:`, error.message);
-      lastError = error;
-      // If it's a 503 Overloaded error, loop and try the next model.
-      // If it's a 400 Bad Request (e.g. image too large) we shouldn't necessarily skip, but we'll try the next anyway.
+  const maxRetries = 3;
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    for (const modelName of modelsToTry) {
+      try {
+        const model = genAI.getGenerativeModel({ model: modelName });
+        const result = await model.generateContent([prompt, imagePart]);
+        const responseText = result.response.text().trim();
+        
+        // Clean up potential markdown formatting just in case the model ignored instructions
+        const cleanJson = responseText.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+        const parsed = JSON.parse(cleanJson);
+        
+        // Validate output
+        return {
+          result: {
+            title: parsed.title || 'Found Item',
+            category: CATEGORIES.includes(parsed.category) ? parsed.category : 'Other',
+            color: COLORS.includes(parsed.color) ? parsed.color : 'Other',
+            brand: parsed.brand || '',
+          }
+        };
+      } catch (error: any) {
+        console.warn(`⚠️ Model ${modelName} failed on attempt ${attempt}:`, error.message);
+        lastError = error;
+      }
+    }
+
+    // If we exhausted all models, check if it was a rate limit / overload error
+    const isOverloaded = lastError?.message?.includes('503') || lastError?.message?.includes('429');
+    
+    if (isOverloaded && attempt < maxRetries) {
+      console.log(`🔄 Google AI overloaded. Waiting 30 seconds before retry ${attempt + 1}/${maxRetries}...`);
+      await new Promise(resolve => setTimeout(resolve, 30000)); // Wait 30 seconds
+    } else {
+      break; // Stop retrying on hard errors or if out of retries
     }
   }
 
-  console.error('All AI Vision models failed. Last error:', lastError);
+  console.error('All AI Vision models and retries failed. Last error:', lastError);
   return { error: lastError?.message || 'Unknown AI error' };
 }

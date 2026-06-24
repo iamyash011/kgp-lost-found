@@ -21,10 +21,10 @@ export interface AIVisionResult {
   brand: string;
 }
 
-export async function analyzeItemImage(buffer: Buffer, mimeType: string): Promise<AIVisionResult | null> {
+export async function analyzeItemImage(buffer: Buffer, mimeType: string): Promise<{ result?: AIVisionResult, error?: string }> {
   if (!process.env.GEMINI_API_KEY) {
     console.warn('⚠️ GEMINI_API_KEY is not set. AI Vision is disabled.');
-    return null;
+    return { error: 'GEMINI_API_KEY environment variable is not set.' };
   }
 
   try {
@@ -66,13 +66,15 @@ export async function analyzeItemImage(buffer: Buffer, mimeType: string): Promis
     
     // Validate output
     return {
-      title: parsed.title || 'Found Item',
-      category: CATEGORIES.includes(parsed.category) ? parsed.category : 'Other',
-      color: COLORS.includes(parsed.color) ? parsed.color : 'Other',
-      brand: parsed.brand || '',
+      result: {
+        title: parsed.title || 'Found Item',
+        category: CATEGORIES.includes(parsed.category) ? parsed.category : 'Other',
+        color: COLORS.includes(parsed.color) ? parsed.color : 'Other',
+        brand: parsed.brand || '',
+      }
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error('AI Vision error:', error);
-    return null;
+    return { error: error.message || 'Unknown AI error' };
   }
 }

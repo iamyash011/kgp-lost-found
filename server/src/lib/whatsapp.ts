@@ -481,13 +481,14 @@ async function handleQuickImage(sock: WASocket, chatId: string, body: string, me
       const mimeType = message.message?.imageMessage?.mimetype || 'image/jpeg';
       
       // Send to Gemini Vision
-      const aiResult = await analyzeItemImage(buffer as Buffer, mimeType);
+      const aiResponse = await analyzeItemImage(buffer as Buffer, mimeType);
       
       // Also upload to cloudinary so we have the URL
       const imageUrl = await uploadBufferToCloudinary(buffer as Buffer);
       session.itemData.imageUrl = imageUrl;
       
-      if (aiResult) {
+      if (aiResponse.result) {
+        const aiResult = aiResponse.result;
         session.itemData.title = aiResult.title;
         session.itemData.category = aiResult.category;
         session.itemData.color = aiResult.color;
@@ -507,7 +508,8 @@ async function handleQuickImage(sock: WASocket, chatId: string, body: string, me
         session.itemData.title = 'Found Item';
         session.itemData.description = 'Found item.';
         await sock.sendMessage(chatId, {
-          text: `⚠️ *Image uploaded!* (AI Analysis skipped or failed)\n\n` +
+          text: `⚠️ *Image uploaded!* (AI Analysis skipped or failed)\n` +
+            `*Reason:* ${aiResponse.error}\n\n` +
             `📍 *Where did you find it?*\n(e.g. Nalanda Classroom Complex, Tech Market)`
         });
       }

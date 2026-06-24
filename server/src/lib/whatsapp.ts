@@ -831,13 +831,32 @@ async function usePostgresAuthState(pool: Pool, sessionId: string) {
     )
   `);
 
+  // Recursively convert {type:'Buffer', data:[...]} back to real Buffer instances
+  const bufferifyValue = (value: any): any => {
+    if (value === null || value === undefined) return value;
+    if (typeof value === 'object' && value.type === 'Buffer' && Array.isArray(value.data)) {
+      return Buffer.from(value.data);
+    }
+    if (Array.isArray(value)) {
+      return value.map(bufferifyValue);
+    }
+    if (typeof value === 'object') {
+      const result: Record<string, any> = {};
+      for (const [k, v] of Object.entries(value)) {
+        result[k] = bufferifyValue(v);
+      }
+      return result;
+    }
+    return value;
+  };
+
   const readData = async (key: string): Promise<any> => {
     const result = await pool.query(
       `SELECT data_value FROM ${tableName} WHERE session_id = $1 AND data_key = $2`,
       [sessionId, key]
     );
     if (result.rows.length > 0) {
-      return JSON.parse(result.rows[0].data_value);
+      return bufferifyValue(JSON.parse(result.rows[0].data_value));
     }
     return null;
   };

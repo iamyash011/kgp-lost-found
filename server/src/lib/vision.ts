@@ -28,7 +28,7 @@ export async function analyzeItemImage(buffer: Buffer, mimeType: string): Promis
   }
 
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-3.5-flash' });
 
     const prompt = `
     Analyze this image of a lost/found item. 

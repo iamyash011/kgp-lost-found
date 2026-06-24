@@ -283,8 +283,11 @@ async function handleIdle(sock: WASocket, chatId: string, session: ConversationS
 
   session.step = ConversationStep.AWAITING_EMAIL;
   await sock.sendMessage(chatId, {
-    text: `👋 *Welcome to KGP Lost & Found!*\n\n` +
-      `I can help you report lost or found items on campus.\n\n` +
+    text: `👋 *Welcome to KGP Lost & Found!* 🏛️\n\n` +
+      `Here’s how this bot makes your life easier:\n` +
+      `📸 *AI Vision:* Found something? Just snap a photo! Our AI automatically identifies the item.\n` +
+      `🤝 *Smart Matching:* We automatically match lost and found items and alert you instantly.\n` +
+      `💬 *Instant Connect:* Claim items and connect with the owner directly via WhatsApp.\n\n` +
       `First, let's verify your identity.\n` +
       `Please enter your *IIT KGP email address*:\n` +
       `(e.g. yourname@iitkgp.ac.in)\n\n` +

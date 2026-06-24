@@ -187,6 +187,15 @@ async function handleMessage(sock: WASocket, chatId: string, messageBody: string
     return;
   }
 
+  // If the user is completely idle, only respond to specific trigger words
+  // This prevents the bot from spamming normal conversations if it's hosted on a spare number
+  if (session.step === ConversationStep.IDLE) {
+    const triggers = ['hi', 'hello', 'start', 'bot', 'menu', 'help'];
+    if (!triggers.includes(bodyLower)) {
+      return; // Silently ignore random texts like "what's up"
+    }
+  }
+
   // Route based on current step
   switch (session.step) {
     case ConversationStep.IDLE:

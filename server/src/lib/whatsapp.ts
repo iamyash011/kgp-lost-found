@@ -999,19 +999,21 @@ export async function initWhatsAppBot() {
 
     // Handle incoming messages
     sock.ev.on('messages.upsert', async ({ messages, type }) => {
-      if (type !== 'notify') return; // Only handle new messages, not history
+      console.log(`📨 messages.upsert event: type=${type}, count=${messages.length}`);
+      // Handle both 'notify' (real-time) and 'append' (some Baileys versions)
 
       for (const msg of messages) {
         try {
           // Skip messages from self
-          if (msg.key.fromMe) continue;
+          if (msg.key.fromMe) { console.log('  ⏭️ Skipping: fromMe'); continue; }
           // Skip group messages
-          if (msg.key.remoteJid?.endsWith('@g.us')) continue;
+          if (msg.key.remoteJid?.endsWith('@g.us')) { console.log('  ⏭️ Skipping: group'); continue; }
           // Skip status broadcasts
-          if (msg.key.remoteJid === 'status@broadcast') continue;
+          if (msg.key.remoteJid === 'status@broadcast') { console.log('  ⏭️ Skipping: status'); continue; }
 
           const chatId = msg.key.remoteJid!;
           const text = getTextFromMessage(msg.message);
+          console.log(`  📩 Processing message from ${chatId}: "${text}"`);
 
           await handleMessage(sock, chatId, text, msg);
         } catch (error) {

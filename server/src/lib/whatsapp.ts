@@ -15,6 +15,7 @@ import { findAndStoreMatches } from './matching';
 import { setBaileysSocket } from './notifier';
 import { v2 as cloudinary } from 'cloudinary';
 import { containsProfanity } from './moderation';
+import { analyzeItemImage } from './vision';
 import { Pool } from 'pg';
 
 const WEBSITE_URL = process.env.WEBSITE_URL || 'https://kgp-lost-found.vercel.app';
@@ -28,6 +29,9 @@ enum ConversationStep {
   AWAITING_OTP = 'AWAITING_OTP',
   VERIFIED_MENU = 'VERIFIED_MENU',
   AWAITING_TYPE = 'AWAITING_TYPE',
+  AWAITING_FOUND_MODE = 'AWAITING_FOUND_MODE',
+  AWAITING_QUICK_IMAGE = 'AWAITING_QUICK_IMAGE',
+  AWAITING_QUICK_LOCATION = 'AWAITING_QUICK_LOCATION',
   AWAITING_TITLE = 'AWAITING_TITLE',
   AWAITING_CATEGORY = 'AWAITING_CATEGORY',
   AWAITING_COLOR = 'AWAITING_COLOR',
@@ -201,6 +205,15 @@ async function handleMessage(sock: WASocket, chatId: string, messageBody: string
       break;
     case ConversationStep.AWAITING_TYPE:
       await handleType(sock, chatId, bodyLower, session);
+      break;
+    case ConversationStep.AWAITING_FOUND_MODE:
+      await handleFoundMode(sock, chatId, bodyLower, session);
+      break;
+    case ConversationStep.AWAITING_QUICK_IMAGE:
+      await handleQuickImage(sock, chatId, body, message, session);
+      break;
+    case ConversationStep.AWAITING_QUICK_LOCATION:
+      await handleQuickLocation(sock, chatId, body, session);
       break;
     case ConversationStep.AWAITING_TITLE:
       await handleTitle(sock, chatId, body, session);
@@ -399,11 +412,13 @@ async function handleMenu(sock: WASocket, chatId: string, body: string, session:
       break;
     case '2':
       session.itemData = { type: 'FOUND' };
-      session.step = ConversationStep.AWAITING_TITLE;
+      session.step = ConversationStep.AWAITING_FOUND_MODE;
       await sock.sendMessage(chatId, {
         text: `📝 *Reporting a FOUND item*\n\n` +
-          `What is the item?\n` +
-          `(e.g. Milton Water Bottle, ID Card, JBL Earbuds)`
+          `Choose your reporting mode:\n\n` +
+          `*1.* ⚡ Quick Mode (Just send a photo & location. AI fills the rest)\n` +
+          `*2.* 📝 Detailed Mode (Manual questions)\n\n` +
+          `Reply with *1* or *2*.`
       });
       break;
     case '3':
@@ -430,6 +445,100 @@ async function handleType(sock: WASocket, chatId: string, body: string, session:
   session.step = ConversationStep.AWAITING_TITLE;
   await sock.sendMessage(chatId, {
     text: `What is the item?\n(e.g. Milton Water Bottle, ID Card, JBL Earbuds)`
+  });
+}
+
+async function handleFoundMode(sock: WASocket, chatId: string, body: string, session: ConversationState) {
+  if (body === '1' || body === 'quick') {
+    session.step = ConversationStep.AWAITING_QUICK_IMAGE;
+    await sock.sendMessage(chatId, {
+      text: `📸 *Send a photo of the item you found.*\n\nOur AI will automatically scan it to determine what it is!`
+    });
+  } else if (body === '2' || body === 'detailed') {
+    session.step = ConversationStep.AWAITING_TITLE;
+    await sock.sendMessage(chatId, {
+      text: `What is the item?\n(e.g. Milton Water Bottle, ID Card, JBL Earbuds)`
+    });
+  } else {
+    await sock.sendMessage(chatId, { text: `Please reply with *1* for Quick Mode or *2* for Detailed Mode.` });
+  }
+}
+
+async function handleQuickImage(sock: WASocket, chatId: string, body: string, message: proto.IWebMessageInfo, session: ConversationState) {
+  const messageType = message.message ? getContentType(message.message) : null;
+  
+  if (messageType === 'imageMessage') {
+    try {
+      await sock.sendMessage(chatId, { text: `⏳ Analyzing image with AI...` });
+      
+      const buffer = await downloadMediaMessage(
+        message as any,
+        'buffer',
+        {},
+        { logger: logger as any, reuploadRequest: sock.updateMediaMessage }
+      );
+      
+      const mimeType = message.message?.imageMessage?.mimetype || 'image/jpeg';
+      
+      // Send to Gemini Vision
+      const aiResult = await analyzeItemImage(buffer as Buffer, mimeType);
+      
+      // Also upload to cloudinary so we have the URL
+      const imageUrl = await uploadBufferToCloudinary(buffer as Buffer);
+      session.itemData.imageUrl = imageUrl;
+      
+      if (aiResult) {
+        session.itemData.title = aiResult.title;
+        session.itemData.category = aiResult.category;
+        session.itemData.color = aiResult.color;
+        session.itemData.brand = aiResult.brand;
+        session.itemData.description = `Found item. Automatically categorized by AI based on image.`;
+        
+        await sock.sendMessage(chatId, {
+          text: `🤖 *AI Analysis Complete!*\n\n` +
+            `*Detected Item:* ${aiResult.title}\n` +
+            `*Category:* ${aiResult.category}\n` +
+            `*Color:* ${aiResult.color}\n` +
+            `*Brand:* ${aiResult.brand || 'None visible'}\n\n` +
+            `📍 *Where did you find it?*\n(e.g. Nalanda Classroom Complex, Tech Market)`
+        });
+      } else {
+        // Fallback if AI fails or no API key
+        session.itemData.title = 'Found Item';
+        session.itemData.description = 'Found item.';
+        await sock.sendMessage(chatId, {
+          text: `⚠️ *Image uploaded!* (AI Analysis skipped or failed)\n\n` +
+            `📍 *Where did you find it?*\n(e.g. Nalanda Classroom Complex, Tech Market)`
+        });
+      }
+      
+      // Default missing properties for FOUND
+      session.itemData.urgency = 'NORMAL';
+      session.step = ConversationStep.AWAITING_QUICK_LOCATION;
+      
+    } catch (error) {
+      console.error('AI Quick Flow Error:', error);
+      await sock.sendMessage(chatId, { text: `❌ Failed to process the image. Please try again or type *cancel*.` });
+    }
+  } else {
+    await sock.sendMessage(chatId, { text: `📸 Please send an *image* of the item to continue.` });
+  }
+}
+
+async function handleQuickLocation(sock: WASocket, chatId: string, body: string, session: ConversationState) {
+  if (body.length < 2) {
+    await sock.sendMessage(chatId, { text: `Please provide a location (at least 2 characters).` });
+    return;
+  }
+  session.itemData.location = body;
+  
+  session.step = ConversationStep.AWAITING_PRIVACY_NAME;
+  await sock.sendMessage(chatId, {
+    text: `🔒 *Privacy Settings*\n\n` +
+      `Show your *name* publicly on the post?\n\n` +
+      `*yes* — Your name is visible to everyone\n` +
+      `*no* — Shows as "Verified Campus User"\n\n` +
+      `Reply *yes* or *no*.`
   });
 }
 

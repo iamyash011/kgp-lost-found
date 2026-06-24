@@ -1,10 +1,4 @@
-import { Resend } from 'resend';
 import nodemailer from 'nodemailer';
-
-// ─── Resend (HTTP API — works on Render) ─────────────────
-const resend = process.env.RESEND_API_KEY
-  ? new Resend(process.env.RESEND_API_KEY)
-  : null;
 
 // ─── Gmail SMTP fallback (works locally, blocked on Render) ─
 const transporter = nodemailer.createTransport({
@@ -20,40 +14,83 @@ const transporter = nodemailer.createTransport({
   }
 });
 
+// ─── Send OTP via Brevo HTTP API (primary) → Resend → Gmail SMTP (fallback) ─
 export const sendOTP = async (toEmail: string, otp: string) => {
   const subject = 'KGP Lost and Found - WhatsApp Verification OTP';
-  const text = `Your OTP for verifying your WhatsApp number on KGP Lost and Found is: ${otp}\n\nPlease enter this code in your WhatsApp chat. Do not share it with anyone.`;
+  const textContent = `Your OTP for verifying your WhatsApp number on KGP Lost and Found is: ${otp}\n\nPlease enter this code in your WhatsApp chat. Do not share it with anyone.`;
+  const senderEmail = process.env.EMAIL_USER || 'kgp.lost.found@gmail.com';
 
-  // Try Resend first (HTTP — works on cloud), then Gmail SMTP fallback
-  if (resend) {
+  // 1️⃣ Try Brevo (300/day free, HTTP API)
+  if (process.env.BREVO_API_KEY) {
     try {
-      await resend.emails.send({
-        from: 'KGPFind <onboarding@resend.dev>',
-        to: toEmail,
-        subject,
-        text,
+      const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json',
+          'api-key': process.env.BREVO_API_KEY,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          sender: { name: 'KGPFind', email: senderEmail },
+          to: [{ email: toEmail }],
+          subject,
+          textContent,
+        }),
       });
-      console.log(`[Resend] OTP sent to ${toEmail}`);
-      return;
+
+      if (response.ok) {
+        console.log(`[Brevo] OTP sent to ${toEmail}`);
+        return;
+      }
+
+      const errorBody = await response.text();
+      console.error(`[Brevo] Failed (${response.status}):`, errorBody);
+      // Fall through to next provider
     } catch (error: any) {
-      console.error(`[Resend] Failed:`, error.message);
-      // Fall through to SMTP
+      console.error(`[Brevo] Error:`, error.message);
     }
   }
 
-  // Fallback: Gmail SMTP (works locally)
+  // 2️⃣ Try Resend (100/day free, HTTP API)
+  if (process.env.RESEND_API_KEY) {
+    try {
+      const response = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: 'KGPFind <onboarding@resend.dev>',
+          to: toEmail,
+          subject,
+          text: textContent,
+        }),
+      });
+
+      if (response.ok) {
+        console.log(`[Resend] OTP sent to ${toEmail}`);
+        return;
+      }
+
+      const errorBody = await response.text();
+      console.error(`[Resend] Failed (${response.status}):`, errorBody);
+    } catch (error: any) {
+      console.error(`[Resend] Error:`, error.message);
+    }
+  }
+
+  // 3️⃣ Fallback: Gmail SMTP (works locally)
   try {
     await transporter.sendMail({
-      from: process.env.EMAIL_USER || 'your-email@gmail.com',
+      from: senderEmail,
       to: toEmail,
       subject,
-      text,
+      text: textContent,
     });
     console.log(`[SMTP] OTP sent to ${toEmail}`);
   } catch (error: any) {
-    console.error(`[SMTP] Failed to send OTP to ${toEmail}:`);
-    console.error(`[SMTP] Error code: ${error.code}`);
-    console.error(`[SMTP] Error message: ${error.message}`);
+    console.error(`[SMTP] Failed to send OTP to ${toEmail}: ${error.code} ${error.message}`);
     throw error;
   }
 };

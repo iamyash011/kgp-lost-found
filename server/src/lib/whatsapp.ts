@@ -189,11 +189,19 @@ async function handleMessage(sock: WASocket, chatId: string, messageBody: string
 
   // If the user is completely idle, only respond to specific trigger words
   // This prevents the bot from spamming normal conversations if it's hosted on a spare number
+  const triggers = ['hi', 'hello', 'start', 'bot', 'menu', 'help'];
   if (session.step === ConversationStep.IDLE) {
-    const triggers = ['hi', 'hello', 'start', 'bot', 'menu', 'help'];
     if (!triggers.includes(bodyLower)) {
       return; // Silently ignore random texts like "what's up"
     }
+  }
+
+  // If the user sends a trigger word while stuck mid-flow (not verified yet), reset them back to start
+  if (triggers.includes(bodyLower) && !session.userId && session.step !== ConversationStep.IDLE) {
+    resetSession(chatId);
+    const freshSession = getSession(chatId);
+    await handleIdle(sock, chatId, freshSession);
+    return;
   }
 
   // Route based on current step
@@ -333,10 +341,11 @@ async function handleEmail(sock: WASocket, chatId: string, body: string, session
         `Please check your inbox (and spam folder) and reply with the code.\n\n` +
         `⏳ OTP expires in 5 minutes.`
     });
-  } catch (error) {
-    console.error('Failed to send OTP:', error);
+  } catch (error: any) {
+    console.error('Failed to send OTP:', error.code, error.message);
+    if (error.response) console.error('SMTP Response:', error.response);
     await sock.sendMessage(chatId, {
-      text: `❌ Failed to send OTP. Please try again later or contact admin.\n\nType *cancel* to start over.`
+      text: `❌ Failed to send OTP. Error: ${error.code || 'Unknown'}.\n\nPlease try again later or contact admin.\n\nType *cancel* to start over.`
     });
   }
 }

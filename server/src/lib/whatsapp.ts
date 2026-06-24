@@ -446,8 +446,12 @@ async function handleViewMatches(sock: WASocket, chatId: string, session: Conver
         ]
       },
       include: {
-        lostItem: true,
-        foundItem: true
+        lostItem: {
+          include: { user: true }
+        },
+        foundItem: {
+          include: { user: true }
+        }
       },
       orderBy: { matchScore: 'desc' },
       take: 5
@@ -472,7 +476,15 @@ async function handleViewMatches(sock: WASocket, chatId: string, session: Conver
       const scorePercentage = Math.round(match.matchScore * 100);
       
       response += `*${idx + 1}.* Your ${myItem.type === 'LOST' ? 'lost' : 'found'} *${myItem.title}* may match a ${otherItem.type === 'LOST' ? 'lost' : 'found'} *${otherItem.title}* near *${otherItem.location}*.\n`;
-      response += `   *Match Score:* ${scorePercentage}%\n\n`;
+      response += `   *Match Score:* ${scorePercentage}%\n`;
+
+      if (otherItem.showPosterWhatsapp && otherItem.user?.whatsappNumber) {
+        // If it's a 10-digit number, prepend 91 for the wa.me link
+        const num = otherItem.user.whatsappNumber.length === 10 ? `91${otherItem.user.whatsappNumber}` : otherItem.user.whatsappNumber;
+        response += `   📞 *Contact:* https://wa.me/${num}\n\n`;
+      } else {
+        response += `   🔒 *Contact:* Hidden (Claim on website to chat)\n\n`;
+      }
     });
 
     response += `🔗 View details and claim items on the website: ${WEBSITE_URL}\n\nType *menu* to go back.`;

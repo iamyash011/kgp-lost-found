@@ -256,10 +256,7 @@ async function handleMessage(sock: WASocket, chatId: string, messageBody: string
       await handleImage(sock, chatId, body, message, session);
       break;
     case ConversationStep.AWAITING_PRIVACY_NAME:
-      await handlePrivacyName(sock, chatId, bodyLower, session);
-      break;
-    case ConversationStep.AWAITING_PRIVACY_WHATSAPP:
-      await handlePrivacyWhatsapp(sock, chatId, bodyLower, session);
+      await handlePrivacySettings(sock, chatId, bodyLower, session);
       break;
     case ConversationStep.AWAITING_CONFIRM:
       await handleConfirm(sock, chatId, bodyLower, session);
@@ -609,10 +606,12 @@ async function handleQuickLocation(sock: WASocket, chatId: string, body: string,
   session.step = ConversationStep.AWAITING_PRIVACY_NAME;
   await sock.sendMessage(chatId, {
     text: `🔒 *Privacy Settings*\n\n` +
-      `Show your *name* publicly on the post?\n\n` +
-      `*yes* — Your name is visible to everyone\n` +
-      `*no* — Shows as "Verified Campus User"\n\n` +
-      `Reply *yes* or *no*.`
+      `Show your Name and WhatsApp number publicly on the post?\n\n` +
+      `*1.* Hide both (Private)\n` +
+      `*2.* Show Name only\n` +
+      `*3.* Show WhatsApp only\n` +
+      `*4.* Show both (Public)\n\n` +
+      `Reply with *1*, *2*, *3*, or *4*.`
   });
 }
 
@@ -818,10 +817,12 @@ async function handleImage(sock: WASocket, chatId: string, body: string, message
     session.step = ConversationStep.AWAITING_PRIVACY_NAME;
     await sock.sendMessage(chatId, {
       text: `🔒 *Privacy Settings*\n\n` +
-        `Show your *name* publicly on the post?\n\n` +
-        `*yes* — Your name is visible to everyone\n` +
-        `*no* — Shows as "Verified Campus User"\n\n` +
-        `Reply *yes* or *no*.`
+        `Show your Name and WhatsApp number publicly on the post?\n\n` +
+        `*1.* Hide both (Private)\n` +
+        `*2.* Show Name only\n` +
+        `*3.* Show WhatsApp only\n` +
+        `*4.* Show both (Public)\n\n` +
+        `Reply with *1*, *2*, *3*, or *4*.`
     });
     return;
   }
@@ -848,10 +849,12 @@ async function handleImage(sock: WASocket, chatId: string, body: string, message
       await sock.sendMessage(chatId, {
         text: `✅ Image uploaded!\n\n` +
           `🔒 *Privacy Settings*\n\n` +
-          `Show your *name* publicly on the post?\n\n` +
-          `*yes* — Your name is visible to everyone\n` +
-          `*no* — Shows as "Verified Campus User"\n\n` +
-          `Reply *yes* or *no*.`
+          `Show your Name and WhatsApp number publicly on the post?\n\n` +
+          `*1.* Hide both (Private)\n` +
+          `*2.* Show Name only\n` +
+          `*3.* Show WhatsApp only\n` +
+          `*4.* Show both (Public)\n\n` +
+          `Reply with *1*, *2*, *3*, or *4*.`
       });
     } catch (error) {
       console.error('Image upload failed:', error);
@@ -866,32 +869,21 @@ async function handleImage(sock: WASocket, chatId: string, body: string, message
   }
 }
 
-async function handlePrivacyName(sock: WASocket, chatId: string, body: string, session: ConversationState) {
-  if (body === 'yes' || body === 'y') {
-    session.itemData.showPosterName = true;
-  } else if (body === 'no' || body === 'n') {
+async function handlePrivacySettings(sock: WASocket, chatId: string, body: string, session: ConversationState) {
+  if (body === '1') {
     session.itemData.showPosterName = false;
-  } else {
-    await sock.sendMessage(chatId, { text: `Please reply *yes* or *no*.` });
-    return;
-  }
-
-  session.step = ConversationStep.AWAITING_PRIVACY_WHATSAPP;
-  await sock.sendMessage(chatId, {
-    text: `📱 Show your *WhatsApp number* publicly?\n\n` +
-      `*yes* — Anyone can see your number\n` +
-      `*no* — Hidden until you accept a claim\n\n` +
-      `Reply *yes* or *no*.`
-  });
-}
-
-async function handlePrivacyWhatsapp(sock: WASocket, chatId: string, body: string, session: ConversationState) {
-  if (body === 'yes' || body === 'y') {
-    session.itemData.showPosterWhatsapp = true;
-  } else if (body === 'no' || body === 'n') {
     session.itemData.showPosterWhatsapp = false;
+  } else if (body === '2') {
+    session.itemData.showPosterName = true;
+    session.itemData.showPosterWhatsapp = false;
+  } else if (body === '3') {
+    session.itemData.showPosterName = false;
+    session.itemData.showPosterWhatsapp = true;
+  } else if (body === '4') {
+    session.itemData.showPosterName = true;
+    session.itemData.showPosterWhatsapp = true;
   } else {
-    await sock.sendMessage(chatId, { text: `Please reply *yes* or *no*.` });
+    await sock.sendMessage(chatId, { text: `Please reply with *1*, *2*, *3*, or *4*.` });
     return;
   }
 

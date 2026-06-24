@@ -74,8 +74,8 @@ export async function findAndStoreMatches(newItem: MatchableItem) {
       }
     }
 
-    // Minimum threshold to create a match
-    if (score >= 0.2) {
+    // Minimum threshold to create a match (0.4 means it requires at least Category + Location/Color/Brand, or Keyword matches)
+    if (score >= 0.4) {
       const lostItemId = newItem.type === 'LOST' ? newItem.id : candidate.id;
       const foundItemId = newItem.type === 'FOUND' ? newItem.id : candidate.id;
 

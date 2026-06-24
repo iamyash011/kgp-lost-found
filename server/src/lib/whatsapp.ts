@@ -889,7 +889,7 @@ async function handlePrivacySettings(sock: WASocket, chatId: string, body: strin
 
   // If there's a pending AI background task, wait for it to finish before showing the summary
   if (session.aiPromise) {
-    await sock.sendMessage(chatId, { text: `⏳ Finalizing AI analysis...` });
+    await sock.sendMessage(chatId, { text: `⏳ Scanning image... please wait` });
     try {
       await session.aiPromise;
     } catch (e) {

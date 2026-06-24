@@ -1,13 +1,25 @@
-import { Client, LocalAuth, RemoteAuth, MessageMedia } from 'whatsapp-web.js';
-import qrcode from 'qrcode-terminal';
+import makeWASocket, {
+  useMultiFileAuthState,
+  DisconnectReason,
+  downloadMediaMessage,
+  getContentType,
+  makeCacheableSignalKeyStore,
+  proto,
+  WASocket,
+} from '@whiskeysockets/baileys';
+import { Boom } from '@hapi/boom';
+import pino from 'pino';
 import prisma from './prisma';
 import { sendOTP } from './email';
 import { findAndStoreMatches } from './matching';
-import { setWhatsAppClient } from './notifier';
+import { setBaileysSocket } from './notifier';
 import { v2 as cloudinary } from 'cloudinary';
 import { containsProfanity } from './moderation';
+import { Pool } from 'pg';
 
 const WEBSITE_URL = process.env.WEBSITE_URL || 'https://kgp-lost-found.vercel.app';
+
+const logger = pino({ level: 'silent' }); // Suppress Baileys' verbose logging
 
 // ─── Conversation State Machine ───────────────────────────
 enum ConversationStep {
@@ -106,15 +118,25 @@ function generateOTP(): string {
 }
 
 function extractWhatsAppNumber(chatId: string): string {
-  // chatId format: 91XXXXXXXXXX@c.us → extract the 10-digit number
-  const match = chatId.replace('@c.us', '');
+  // chatId format: 91XXXXXXXXXX@s.whatsapp.net → extract the 10-digit number
+  const match = chatId.replace('@s.whatsapp.net', '');
   if (match.startsWith('91') && match.length === 12) {
     return match.substring(2); // Remove country code
   }
   return match;
 }
 
-async function uploadImageToCloudinary(media: MessageMedia): Promise<string> {
+function getTextFromMessage(message: proto.IMessage | null | undefined): string {
+  if (!message) return '';
+  return (
+    message.conversation ||
+    message.extendedTextMessage?.text ||
+    message.imageMessage?.caption ||
+    ''
+  );
+}
+
+async function uploadBufferToCloudinary(buffer: Buffer): Promise<string> {
   return new Promise((resolve, reject) => {
     const uploadStream = cloudinary.uploader.upload_stream(
       {
@@ -127,13 +149,12 @@ async function uploadImageToCloudinary(media: MessageMedia): Promise<string> {
         resolve(result!.secure_url);
       }
     );
-    const buffer = Buffer.from(media.data, 'base64');
     uploadStream.end(buffer);
   });
 }
 
 // ─── Message Handler ──────────────────────────────────────
-async function handleMessage(client: Client, chatId: string, messageBody: string, message: any) {
+async function handleMessage(sock: WASocket, chatId: string, messageBody: string, message: proto.IWebMessageInfo) {
   const session = getSession(chatId);
   const body = messageBody.trim();
   const bodyLower = body.toLowerCase();
@@ -146,13 +167,13 @@ async function handleMessage(client: Client, chatId: string, messageBody: string
       session.step = ConversationStep.VERIFIED_MENU;
       session.itemData = {};
       if (wasInFlow) {
-        await client.sendMessage(chatId, '❌ Item report cancelled.\n\n' + getMenuMessage());
+        await sock.sendMessage(chatId, { text: '❌ Item report cancelled.\n\n' + getMenuMessage() });
       } else {
-        await client.sendMessage(chatId, getMenuMessage());
+        await sock.sendMessage(chatId, { text: getMenuMessage() });
       }
     } else {
       resetSession(chatId);
-      await client.sendMessage(chatId, '❌ Cancelled. Send *hi* to start again.');
+      await sock.sendMessage(chatId, { text: '❌ Cancelled. Send *hi* to start again.' });
     }
     return;
   }
@@ -160,68 +181,68 @@ async function handleMessage(client: Client, chatId: string, messageBody: string
   if (bodyLower === 'menu' && session.userId) {
     session.step = ConversationStep.VERIFIED_MENU;
     session.itemData = {};
-    await client.sendMessage(chatId, getMenuMessage());
+    await sock.sendMessage(chatId, { text: getMenuMessage() });
     return;
   }
 
   // Route based on current step
   switch (session.step) {
     case ConversationStep.IDLE:
-      await handleIdle(client, chatId, session);
+      await handleIdle(sock, chatId, session);
       break;
     case ConversationStep.AWAITING_EMAIL:
-      await handleEmail(client, chatId, body, session);
+      await handleEmail(sock, chatId, body, session);
       break;
     case ConversationStep.AWAITING_OTP:
-      await handleOTPVerification(client, chatId, body, session);
+      await handleOTPVerification(sock, chatId, body, session);
       break;
     case ConversationStep.VERIFIED_MENU:
-      await handleMenu(client, chatId, bodyLower, session);
+      await handleMenu(sock, chatId, bodyLower, session);
       break;
     case ConversationStep.AWAITING_TYPE:
-      await handleType(client, chatId, bodyLower, session);
+      await handleType(sock, chatId, bodyLower, session);
       break;
     case ConversationStep.AWAITING_TITLE:
-      await handleTitle(client, chatId, body, session);
+      await handleTitle(sock, chatId, body, session);
       break;
     case ConversationStep.AWAITING_CATEGORY:
-      await handleCategory(client, chatId, body, session);
+      await handleCategory(sock, chatId, body, session);
       break;
     case ConversationStep.AWAITING_COLOR:
-      await handleColor(client, chatId, body, session);
+      await handleColor(sock, chatId, body, session);
       break;
     case ConversationStep.AWAITING_BRAND:
-      await handleBrand(client, chatId, body, session);
+      await handleBrand(sock, chatId, body, session);
       break;
     case ConversationStep.AWAITING_DATE:
-      await handleDate(client, chatId, body, session);
+      await handleDate(sock, chatId, body, session);
       break;
     case ConversationStep.AWAITING_DESCRIPTION:
-      await handleDescription(client, chatId, body, session);
+      await handleDescription(sock, chatId, body, session);
       break;
     case ConversationStep.AWAITING_LOCATION:
-      await handleLocation(client, chatId, body, session);
+      await handleLocation(sock, chatId, body, session);
       break;
     case ConversationStep.AWAITING_IDENTIFYING_MARKS:
-      await handleIdentifyingMarks(client, chatId, body, session);
+      await handleIdentifyingMarks(sock, chatId, body, session);
       break;
     case ConversationStep.AWAITING_URGENCY:
-      await handleUrgency(client, chatId, bodyLower, session);
+      await handleUrgency(sock, chatId, bodyLower, session);
       break;
     case ConversationStep.AWAITING_REWARD:
-      await handleReward(client, chatId, body, session);
+      await handleReward(sock, chatId, body, session);
       break;
     case ConversationStep.AWAITING_IMAGE:
-      await handleImage(client, chatId, body, message, session);
+      await handleImage(sock, chatId, body, message, session);
       break;
     case ConversationStep.AWAITING_PRIVACY_NAME:
-      await handlePrivacyName(client, chatId, bodyLower, session);
+      await handlePrivacyName(sock, chatId, bodyLower, session);
       break;
     case ConversationStep.AWAITING_PRIVACY_WHATSAPP:
-      await handlePrivacyWhatsapp(client, chatId, bodyLower, session);
+      await handlePrivacyWhatsapp(sock, chatId, bodyLower, session);
       break;
     case ConversationStep.AWAITING_CONFIRM:
-      await handleConfirm(client, chatId, bodyLower, session);
+      await handleConfirm(sock, chatId, bodyLower, session);
       break;
   }
 }
@@ -232,7 +253,7 @@ function getMenuMessage(): string {
   return `📋 *KGP Lost & Found — Menu*\n\nWhat would you like to do?\n\n*1.* Report a Lost item\n*2.* Report a Found item\n*3.* View all items on website\n\nReply with *1*, *2*, or *3*.\n\n🔗 ${WEBSITE_URL}`;
 }
 
-async function handleIdle(client: Client, chatId: string, session: ConversationState) {
+async function handleIdle(sock: WASocket, chatId: string, session: ConversationState) {
   // Check if this WhatsApp number is already linked to a user
   const phoneNumber = extractWhatsAppNumber(chatId);
   const existingUser = await prisma.user.findFirst({
@@ -243,38 +264,38 @@ async function handleIdle(client: Client, chatId: string, session: ConversationS
     session.userId = existingUser.id;
     session.email = existingUser.email;
     session.step = ConversationStep.VERIFIED_MENU;
-    await client.sendMessage(chatId,
-      `👋 Welcome back, *${existingUser.name}*!\n\n` + getMenuMessage()
-    );
+    await sock.sendMessage(chatId, {
+      text: `👋 Welcome back, *${existingUser.name}*!\n\n` + getMenuMessage()
+    });
     return;
   }
 
   session.step = ConversationStep.AWAITING_EMAIL;
-  await client.sendMessage(chatId,
-    `👋 *Welcome to KGP Lost & Found!*\n\n` +
-    `I can help you report lost or found items on campus.\n\n` +
-    `First, let's verify your identity.\n` +
-    `Please enter your *IIT KGP email address*:\n` +
-    `(e.g. yourname@iitkgp.ac.in)\n\n` +
-    `🔗 Visit our website: ${WEBSITE_URL}`
-  );
+  await sock.sendMessage(chatId, {
+    text: `👋 *Welcome to KGP Lost & Found!*\n\n` +
+      `I can help you report lost or found items on campus.\n\n` +
+      `First, let's verify your identity.\n` +
+      `Please enter your *IIT KGP email address*:\n` +
+      `(e.g. yourname@iitkgp.ac.in)\n\n` +
+      `🔗 Visit our website: ${WEBSITE_URL}`
+  });
 }
 
-async function handleEmail(client: Client, chatId: string, body: string, session: ConversationState) {
+async function handleEmail(sock: WASocket, chatId: string, body: string, session: ConversationState) {
   const email = body.toLowerCase().trim();
 
   // Validate IIT KGP email
   if (!email.endsWith('iitkgp.ac.in') && email !== 'kgp.lost.found@gmail.com') {
-    await client.sendMessage(chatId,
-      `❌ Only *IIT KGP email addresses* are allowed.\n\nPlease enter a valid email ending with *@iitkgp.ac.in*`
-    );
+    await sock.sendMessage(chatId, {
+      text: `❌ Only *IIT KGP email addresses* are allowed.\n\nPlease enter a valid email ending with *@iitkgp.ac.in*`
+    });
     return;
   }
 
   // Basic email format check
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
-    await client.sendMessage(chatId, `❌ That doesn't look like a valid email. Please try again.`);
+    await sock.sendMessage(chatId, { text: `❌ That doesn't look like a valid email. Please try again.` });
     return;
   }
 
@@ -287,23 +308,23 @@ async function handleEmail(client: Client, chatId: string, body: string, session
   try {
     await sendOTP(email, otp);
     session.step = ConversationStep.AWAITING_OTP;
-    await client.sendMessage(chatId,
-      `📧 A *6-digit OTP* has been sent to *${email}*.\n\n` +
-      `Please check your inbox (and spam folder) and reply with the code.\n\n` +
-      `⏳ OTP expires in 5 minutes.`
-    );
+    await sock.sendMessage(chatId, {
+      text: `📧 A *6-digit OTP* has been sent to *${email}*.\n\n` +
+        `Please check your inbox (and spam folder) and reply with the code.\n\n` +
+        `⏳ OTP expires in 5 minutes.`
+    });
   } catch (error) {
     console.error('Failed to send OTP:', error);
-    await client.sendMessage(chatId,
-      `❌ Failed to send OTP. Please try again later or contact admin.\n\nType *cancel* to start over.`
-    );
+    await sock.sendMessage(chatId, {
+      text: `❌ Failed to send OTP. Please try again later or contact admin.\n\nType *cancel* to start over.`
+    });
   }
 }
 
-async function handleOTPVerification(client: Client, chatId: string, body: string, session: ConversationState) {
+async function handleOTPVerification(sock: WASocket, chatId: string, body: string, session: ConversationState) {
   if (!session.otp || !session.otpExpiry) {
     session.step = ConversationStep.AWAITING_EMAIL;
-    await client.sendMessage(chatId, `❌ Session expired. Please enter your email again.`);
+    await sock.sendMessage(chatId, { text: `❌ Session expired. Please enter your email again.` });
     return;
   }
 
@@ -311,12 +332,12 @@ async function handleOTPVerification(client: Client, chatId: string, body: strin
     session.otp = undefined;
     session.otpExpiry = undefined;
     session.step = ConversationStep.AWAITING_EMAIL;
-    await client.sendMessage(chatId, `⏰ OTP expired! Please enter your email again to get a new one.`);
+    await sock.sendMessage(chatId, { text: `⏰ OTP expired! Please enter your email again to get a new one.` });
     return;
   }
 
   if (body.trim() !== session.otp) {
-    await client.sendMessage(chatId, `❌ Incorrect OTP. Please try again or type *cancel* to start over.`);
+    await sock.sendMessage(chatId, { text: `❌ Incorrect OTP. Please try again or type *cancel* to start over.` });
     return;
   }
 
@@ -352,85 +373,85 @@ async function handleOTPVerification(client: Client, chatId: string, body: strin
     session.otpExpiry = undefined;
     session.step = ConversationStep.VERIFIED_MENU;
 
-    await client.sendMessage(chatId,
-      `✅ *Verified successfully!*\n\n` +
-      `Welcome, *${user.name}*! Your WhatsApp is now linked to your KGP Lost & Found account.\n\n` +
-      getMenuMessage()
-    );
+    await sock.sendMessage(chatId, {
+      text: `✅ *Verified successfully!*\n\n` +
+        `Welcome, *${user.name}*! Your WhatsApp is now linked to your KGP Lost & Found account.\n\n` +
+        getMenuMessage()
+    });
   } catch (error) {
     console.error('Failed to link user:', error);
-    await client.sendMessage(chatId,
-      `❌ Something went wrong. Please try again.\n\nType *cancel* to start over.`
-    );
+    await sock.sendMessage(chatId, {
+      text: `❌ Something went wrong. Please try again.\n\nType *cancel* to start over.`
+    });
   }
 }
 
-async function handleMenu(client: Client, chatId: string, body: string, session: ConversationState) {
+async function handleMenu(sock: WASocket, chatId: string, body: string, session: ConversationState) {
   switch (body) {
     case '1':
       session.itemData = { type: 'LOST' };
       session.step = ConversationStep.AWAITING_TITLE;
-      await client.sendMessage(chatId,
-        `📝 *Reporting a LOST item*\n\n` +
-        `What is the item?\n` +
-        `(e.g. Milton Water Bottle, ID Card, JBL Earbuds)`
-      );
+      await sock.sendMessage(chatId, {
+        text: `📝 *Reporting a LOST item*\n\n` +
+          `What is the item?\n` +
+          `(e.g. Milton Water Bottle, ID Card, JBL Earbuds)`
+      });
       break;
     case '2':
       session.itemData = { type: 'FOUND' };
       session.step = ConversationStep.AWAITING_TITLE;
-      await client.sendMessage(chatId,
-        `📝 *Reporting a FOUND item*\n\n` +
-        `What is the item?\n` +
-        `(e.g. Milton Water Bottle, ID Card, JBL Earbuds)`
-      );
+      await sock.sendMessage(chatId, {
+        text: `📝 *Reporting a FOUND item*\n\n` +
+          `What is the item?\n` +
+          `(e.g. Milton Water Bottle, ID Card, JBL Earbuds)`
+      });
       break;
     case '3':
-      await client.sendMessage(chatId,
-        `🔗 *View all items on our website:*\n\n${WEBSITE_URL}\n\n` +
-        `Type *menu* to go back.`
-      );
+      await sock.sendMessage(chatId, {
+        text: `🔗 *View all items on our website:*\n\n${WEBSITE_URL}\n\n` +
+          `Type *menu* to go back.`
+      });
       break;
     default:
-      await client.sendMessage(chatId, `Please reply with *1*, *2*, or *3*.\n\n` + getMenuMessage());
+      await sock.sendMessage(chatId, { text: `Please reply with *1*, *2*, or *3*.\n\n` + getMenuMessage() });
   }
 }
 
-async function handleType(client: Client, chatId: string, body: string, session: ConversationState) {
+async function handleType(sock: WASocket, chatId: string, body: string, session: ConversationState) {
   // This is a fallback if someone reaches AWAITING_TYPE directly
   if (body === '1' || body === 'lost') {
     session.itemData.type = 'LOST';
   } else if (body === '2' || body === 'found') {
     session.itemData.type = 'FOUND';
   } else {
-    await client.sendMessage(chatId, `Please reply with *1* for LOST or *2* for FOUND.`);
+    await sock.sendMessage(chatId, { text: `Please reply with *1* for LOST or *2* for FOUND.` });
     return;
   }
   session.step = ConversationStep.AWAITING_TITLE;
-  await client.sendMessage(chatId,
-    `What is the item?\n(e.g. Milton Water Bottle, ID Card, JBL Earbuds)`
-  );
+  await sock.sendMessage(chatId, {
+    text: `What is the item?\n(e.g. Milton Water Bottle, ID Card, JBL Earbuds)`
+  });
 }
 
-async function handleTitle(client: Client, chatId: string, body: string, session: ConversationState) {
+async function handleTitle(sock: WASocket, chatId: string, body: string, session: ConversationState) {
   if (body.length < 2) {
-    await client.sendMessage(chatId, `Please provide a more descriptive title (at least 2 characters).`);
+    await sock.sendMessage(chatId, { text: `Please provide a more descriptive title (at least 2 characters).` });
     return;
   }
   if (containsProfanity([body])) {
-    await client.sendMessage(chatId, `❌ Title contains inappropriate language. Please try again.`);
+    await sock.sendMessage(chatId, { text: `❌ Title contains inappropriate language. Please try again.` });
     return;
   }
   session.itemData.title = body;
   session.step = ConversationStep.AWAITING_CATEGORY;
 
   const categoryList = CATEGORIES.map((c, i) => `*${i + 1}.* ${c}`).join('\n');
-  await client.sendMessage(chatId,
-    `📂 *Select a category:*\n\n${categoryList}\n\nReply with the *number* or type *skip*.`
-  );
+  await sock.sendMessage(chatId, {
+    text: `📂 *Select a category:*\n\n${categoryList}\n\nReply with the *number* or type *skip*.`
+  });
 }
 
-async function handleCategory(client: Client, chatId: string, body: string, session: ConversationState) {
+async function handleCategory(sock: WASocket, chatId: string, body: string, session: ConversationState) {
   if (body.toLowerCase() === 'skip') {
     session.itemData.category = undefined;
   } else {
@@ -443,9 +464,9 @@ async function handleCategory(client: Client, chatId: string, body: string, sess
       if (match) {
         session.itemData.category = match;
       } else {
-        await client.sendMessage(chatId,
-          `Please reply with a number (1-${CATEGORIES.length}) or type *skip*.`
-        );
+        await sock.sendMessage(chatId, {
+          text: `Please reply with a number (1-${CATEGORIES.length}) or type *skip*.`
+        });
         return;
       }
     }
@@ -453,12 +474,12 @@ async function handleCategory(client: Client, chatId: string, body: string, sess
 
   session.step = ConversationStep.AWAITING_COLOR;
   const colorList = COLORS.map((c, i) => `*${i + 1}.* ${c}`).join('\n');
-  await client.sendMessage(chatId,
-    `🎨 *Select a color:*\n\n${colorList}\n\nReply with the *number* or type *skip*.`
-  );
+  await sock.sendMessage(chatId, {
+    text: `🎨 *Select a color:*\n\n${colorList}\n\nReply with the *number* or type *skip*.`
+  });
 }
 
-async function handleColor(client: Client, chatId: string, body: string, session: ConversationState) {
+async function handleColor(sock: WASocket, chatId: string, body: string, session: ConversationState) {
   if (body.toLowerCase() === 'skip') {
     session.itemData.color = undefined;
   } else {
@@ -470,35 +491,35 @@ async function handleColor(client: Client, chatId: string, body: string, session
       if (match) {
         session.itemData.color = match;
       } else {
-        await client.sendMessage(chatId,
-          `Please reply with a number (1-${COLORS.length}) or type *skip*.`
-        );
+        await sock.sendMessage(chatId, {
+          text: `Please reply with a number (1-${COLORS.length}) or type *skip*.`
+        });
         return;
       }
     }
   }
 
   session.step = ConversationStep.AWAITING_BRAND;
-  await client.sendMessage(chatId,
-    `🏷️ *Brand?*\n(e.g. JBL, Samsung, Milton, Apple)\n\nType the brand name or *skip*.`
-  );
+  await sock.sendMessage(chatId, {
+    text: `🏷️ *Brand?*\n(e.g. JBL, Samsung, Milton, Apple)\n\nType the brand name or *skip*.`
+  });
 }
 
-async function handleBrand(client: Client, chatId: string, body: string, session: ConversationState) {
+async function handleBrand(sock: WASocket, chatId: string, body: string, session: ConversationState) {
   if (body.toLowerCase() !== 'skip') {
     session.itemData.brand = body;
   }
 
   session.step = ConversationStep.AWAITING_DATE;
   const typeWord = session.itemData.type === 'LOST' ? 'lose' : 'find';
-  await client.sendMessage(chatId,
-    `📅 *When did you ${typeWord} it?*\n\n` +
-    `Reply in format: *DD/MM/YYYY*\n` +
-    `(e.g. 23/06/2026)\n\nOr type *skip*.`
-  );
+  await sock.sendMessage(chatId, {
+    text: `📅 *When did you ${typeWord} it?*\n\n` +
+      `Reply in format: *DD/MM/YYYY*\n` +
+      `(e.g. 23/06/2026)\n\nOr type *skip*.`
+  });
 }
 
-async function handleDate(client: Client, chatId: string, body: string, session: ConversationState) {
+async function handleDate(sock: WASocket, chatId: string, body: string, session: ConversationState) {
   if (body.toLowerCase() !== 'skip') {
     // Parse DD/MM/YYYY
     const dateRegex = /^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/;
@@ -510,59 +531,59 @@ async function handleDate(client: Client, chatId: string, body: string, session:
       const date = new Date(year, month - 1, day);
       
       if (date > new Date()) {
-        await client.sendMessage(chatId, `❌ Date cannot be in the future. Please try again or type *skip*.`);
+        await sock.sendMessage(chatId, { text: `❌ Date cannot be in the future. Please try again or type *skip*.` });
         return;
       }
       
       session.itemData.dateOccurred = date.toISOString();
     } else {
-      await client.sendMessage(chatId,
-        `❌ Invalid date format. Please use *DD/MM/YYYY* (e.g. 23/06/2026) or type *skip*.`
-      );
+      await sock.sendMessage(chatId, {
+        text: `❌ Invalid date format. Please use *DD/MM/YYYY* (e.g. 23/06/2026) or type *skip*.`
+      });
       return;
     }
   }
 
   session.step = ConversationStep.AWAITING_DESCRIPTION;
-  await client.sendMessage(chatId,
-    `📝 *Describe the item in detail:*\n\n` +
-    `Include scratches, stickers, unique features, any details that help identify it.`
-  );
+  await sock.sendMessage(chatId, {
+    text: `📝 *Describe the item in detail:*\n\n` +
+      `Include scratches, stickers, unique features, any details that help identify it.`
+  });
 }
 
-async function handleDescription(client: Client, chatId: string, body: string, session: ConversationState) {
+async function handleDescription(sock: WASocket, chatId: string, body: string, session: ConversationState) {
   if (body.length < 5) {
-    await client.sendMessage(chatId, `Please provide a more detailed description (at least 5 characters).`);
+    await sock.sendMessage(chatId, { text: `Please provide a more detailed description (at least 5 characters).` });
     return;
   }
   if (containsProfanity([body])) {
-    await client.sendMessage(chatId, `❌ Description contains inappropriate language. Please try again.`);
+    await sock.sendMessage(chatId, { text: `❌ Description contains inappropriate language. Please try again.` });
     return;
   }
   session.itemData.description = body;
   session.step = ConversationStep.AWAITING_LOCATION;
 
   const typeWord = session.itemData.type === 'LOST' ? 'lost' : 'found';
-  await client.sendMessage(chatId,
-    `📍 *Where was it ${typeWord}?*\n\n` +
-    `(e.g. Nalanda Classroom Complex, LBS Hall, Tech Market, Main Building)`
-  );
+  await sock.sendMessage(chatId, {
+    text: `📍 *Where was it ${typeWord}?*\n\n` +
+      `(e.g. Nalanda Classroom Complex, LBS Hall, Tech Market, Main Building)`
+  });
 }
 
-async function handleLocation(client: Client, chatId: string, body: string, session: ConversationState) {
+async function handleLocation(sock: WASocket, chatId: string, body: string, session: ConversationState) {
   if (body.length < 2) {
-    await client.sendMessage(chatId, `Please provide a location (at least 2 characters).`);
+    await sock.sendMessage(chatId, { text: `Please provide a location (at least 2 characters).` });
     return;
   }
   session.itemData.location = body;
   session.step = ConversationStep.AWAITING_IDENTIFYING_MARKS;
-  await client.sendMessage(chatId,
-    `🔍 *Any identifying marks?*\n\n` +
-    `(e.g. scratch on base, red tape, name written on it)\n\nOr type *skip*.`
-  );
+  await sock.sendMessage(chatId, {
+    text: `🔍 *Any identifying marks?*\n\n` +
+      `(e.g. scratch on base, red tape, name written on it)\n\nOr type *skip*.`
+  });
 }
 
-async function handleIdentifyingMarks(client: Client, chatId: string, body: string, session: ConversationState) {
+async function handleIdentifyingMarks(sock: WASocket, chatId: string, body: string, session: ConversationState) {
   if (body.toLowerCase() !== 'skip') {
     session.itemData.identifyingMarks = body;
   }
@@ -570,119 +591,124 @@ async function handleIdentifyingMarks(client: Client, chatId: string, body: stri
   // If LOST, ask urgency; otherwise skip to image
   if (session.itemData.type === 'LOST') {
     session.step = ConversationStep.AWAITING_URGENCY;
-    await client.sendMessage(chatId,
-      `⚡ *Urgency level?*\n\n*1.* Normal\n*2.* 🔥 Urgent\n\nReply with *1* or *2*.`
-    );
+    await sock.sendMessage(chatId, {
+      text: `⚡ *Urgency level?*\n\n*1.* Normal\n*2.* 🔥 Urgent\n\nReply with *1* or *2*.`
+    });
   } else {
     session.itemData.urgency = 'NORMAL';
     session.step = ConversationStep.AWAITING_IMAGE;
-    await client.sendMessage(chatId,
-      `📸 *Send a photo of the item*, or type *skip* if you don't have one.`
-    );
+    await sock.sendMessage(chatId, {
+      text: `📸 *Send a photo of the item*, or type *skip* if you don't have one.`
+    });
   }
 }
 
-async function handleUrgency(client: Client, chatId: string, body: string, session: ConversationState) {
+async function handleUrgency(sock: WASocket, chatId: string, body: string, session: ConversationState) {
   if (body === '1' || body === 'normal') {
     session.itemData.urgency = 'NORMAL';
   } else if (body === '2' || body === 'urgent') {
     session.itemData.urgency = 'URGENT';
   } else {
-    await client.sendMessage(chatId, `Please reply *1* for Normal or *2* for Urgent.`);
+    await sock.sendMessage(chatId, { text: `Please reply *1* for Normal or *2* for Urgent.` });
     return;
   }
 
   session.step = ConversationStep.AWAITING_REWARD;
-  await client.sendMessage(chatId,
-    `💰 *Any reward for the finder?*\n\n(e.g. ₹500 reward)\n\nOr type *skip*.`
-  );
+  await sock.sendMessage(chatId, {
+    text: `💰 *Any reward for the finder?*\n\n(e.g. ₹500 reward)\n\nOr type *skip*.`
+  });
 }
 
-async function handleReward(client: Client, chatId: string, body: string, session: ConversationState) {
+async function handleReward(sock: WASocket, chatId: string, body: string, session: ConversationState) {
   if (body.toLowerCase() !== 'skip') {
     session.itemData.reward = body;
   }
 
   session.step = ConversationStep.AWAITING_IMAGE;
-  await client.sendMessage(chatId,
-    `📸 *Send a photo of the item*, or type *skip* if you don't have one.`
-  );
+  await sock.sendMessage(chatId, {
+    text: `📸 *Send a photo of the item*, or type *skip* if you don't have one.`
+  });
 }
 
-async function handleImage(client: Client, chatId: string, body: string, message: any, session: ConversationState) {
+async function handleImage(sock: WASocket, chatId: string, body: string, message: proto.IWebMessageInfo, session: ConversationState) {
   if (body.toLowerCase() === 'skip') {
     session.step = ConversationStep.AWAITING_PRIVACY_NAME;
-    await client.sendMessage(chatId,
-      `🔒 *Privacy Settings*\n\n` +
-      `Show your *name* publicly on the post?\n\n` +
-      `*yes* — Your name is visible to everyone\n` +
-      `*no* — Shows as "Verified Campus User"\n\n` +
-      `Reply *yes* or *no*.`
-    );
-    return;
-  }
-
-  // Check if the message has media
-  if (message.hasMedia) {
-    try {
-      const media = await message.downloadMedia();
-      if (!media || !media.mimetype.startsWith('image/')) {
-        await client.sendMessage(chatId, `❌ Please send an *image* file, or type *skip*.`);
-        return;
-      }
-
-      await client.sendMessage(chatId, `⏳ Uploading image...`);
-      const imageUrl = await uploadImageToCloudinary(media);
-      session.itemData.imageUrl = imageUrl;
-
-      session.step = ConversationStep.AWAITING_PRIVACY_NAME;
-      await client.sendMessage(chatId,
-        `✅ Image uploaded!\n\n` +
-        `🔒 *Privacy Settings*\n\n` +
+    await sock.sendMessage(chatId, {
+      text: `🔒 *Privacy Settings*\n\n` +
         `Show your *name* publicly on the post?\n\n` +
         `*yes* — Your name is visible to everyone\n` +
         `*no* — Shows as "Verified Campus User"\n\n` +
         `Reply *yes* or *no*.`
+    });
+    return;
+  }
+
+  // Check if the message has an image
+  const messageType = message.message ? getContentType(message.message) : null;
+  if (messageType === 'imageMessage') {
+    try {
+      const buffer = await downloadMediaMessage(
+        message as any,
+        'buffer',
+        {},
+        {
+          logger: logger as any,
+          reuploadRequest: sock.updateMediaMessage,
+        }
       );
+
+      await sock.sendMessage(chatId, { text: `⏳ Uploading image...` });
+      const imageUrl = await uploadBufferToCloudinary(buffer as Buffer);
+      session.itemData.imageUrl = imageUrl;
+
+      session.step = ConversationStep.AWAITING_PRIVACY_NAME;
+      await sock.sendMessage(chatId, {
+        text: `✅ Image uploaded!\n\n` +
+          `🔒 *Privacy Settings*\n\n` +
+          `Show your *name* publicly on the post?\n\n` +
+          `*yes* — Your name is visible to everyone\n` +
+          `*no* — Shows as "Verified Campus User"\n\n` +
+          `Reply *yes* or *no*.`
+      });
     } catch (error) {
       console.error('Image upload failed:', error);
-      await client.sendMessage(chatId,
-        `❌ Image upload failed. Please try again or type *skip* to continue without an image.`
-      );
+      await sock.sendMessage(chatId, {
+        text: `❌ Image upload failed. Please try again or type *skip* to continue without an image.`
+      });
     }
   } else {
-    await client.sendMessage(chatId,
-      `📸 Please *send a photo* or type *skip* to continue without one.`
-    );
+    await sock.sendMessage(chatId, {
+      text: `📸 Please *send a photo* or type *skip* to continue without one.`
+    });
   }
 }
 
-async function handlePrivacyName(client: Client, chatId: string, body: string, session: ConversationState) {
+async function handlePrivacyName(sock: WASocket, chatId: string, body: string, session: ConversationState) {
   if (body === 'yes' || body === 'y') {
     session.itemData.showPosterName = true;
   } else if (body === 'no' || body === 'n') {
     session.itemData.showPosterName = false;
   } else {
-    await client.sendMessage(chatId, `Please reply *yes* or *no*.`);
+    await sock.sendMessage(chatId, { text: `Please reply *yes* or *no*.` });
     return;
   }
 
   session.step = ConversationStep.AWAITING_PRIVACY_WHATSAPP;
-  await client.sendMessage(chatId,
-    `📱 Show your *WhatsApp number* publicly?\n\n` +
-    `*yes* — Anyone can see your number\n` +
-    `*no* — Hidden until you accept a claim\n\n` +
-    `Reply *yes* or *no*.`
-  );
+  await sock.sendMessage(chatId, {
+    text: `📱 Show your *WhatsApp number* publicly?\n\n` +
+      `*yes* — Anyone can see your number\n` +
+      `*no* — Hidden until you accept a claim\n\n` +
+      `Reply *yes* or *no*.`
+  });
 }
 
-async function handlePrivacyWhatsapp(client: Client, chatId: string, body: string, session: ConversationState) {
+async function handlePrivacyWhatsapp(sock: WASocket, chatId: string, body: string, session: ConversationState) {
   if (body === 'yes' || body === 'y') {
     session.itemData.showPosterWhatsapp = true;
   } else if (body === 'no' || body === 'n') {
     session.itemData.showPosterWhatsapp = false;
   } else {
-    await client.sendMessage(chatId, `Please reply *yes* or *no*.`);
+    await sock.sendMessage(chatId, { text: `Please reply *yes* or *no*.` });
     return;
   }
 
@@ -708,18 +734,18 @@ async function handlePrivacyWhatsapp(client: Client, chatId: string, body: strin
     `\nReply *confirm* to post or *cancel* to discard.`,
   ].filter(Boolean).join('\n');
 
-  await client.sendMessage(chatId, summary);
+  await sock.sendMessage(chatId, { text: summary });
 }
 
-async function handleConfirm(client: Client, chatId: string, body: string, session: ConversationState) {
+async function handleConfirm(sock: WASocket, chatId: string, body: string, session: ConversationState) {
   if (body !== 'confirm') {
     if (body === 'cancel') {
       session.step = ConversationStep.VERIFIED_MENU;
       session.itemData = {};
-      await client.sendMessage(chatId, `❌ Post discarded.\n\n` + getMenuMessage());
+      await sock.sendMessage(chatId, { text: `❌ Post discarded.\n\n` + getMenuMessage() });
       return;
     }
-    await client.sendMessage(chatId, `Reply *confirm* to post or *cancel* to discard.`);
+    await sock.sendMessage(chatId, { text: `Reply *confirm* to post or *cancel* to discard.` });
     return;
   }
 
@@ -734,9 +760,9 @@ async function handleConfirm(client: Client, chatId: string, body: string, sessi
       where: { userId, createdAt: { gte: oneHourAgo } },
     });
     if (recentCount >= 5) {
-      await client.sendMessage(chatId,
-        `⚠️ You've reached the limit of 5 items per hour. Please try again later.\n\n` + getMenuMessage()
-      );
+      await sock.sendMessage(chatId, {
+        text: `⚠️ You've reached the limit of 5 items per hour. Please try again later.\n\n` + getMenuMessage()
+      });
       session.step = ConversationStep.VERIFIED_MENU;
       session.itemData = {};
       return;
@@ -774,140 +800,213 @@ async function handleConfirm(client: Client, chatId: string, body: string, sessi
     session.itemData = {};
 
     const typeEmoji = d.type === 'LOST' ? '🔴' : '🟢';
-    await client.sendMessage(chatId,
-      `✅ *Item posted successfully!* ${typeEmoji}\n\n` +
-      `*"${d.title}"* has been added to the feed.\n` +
-      `Our matching algorithm is now searching for potential matches.\n\n` +
-      `📲 You'll receive a WhatsApp notification if we find a match!\n\n` +
-      `🔗 *View your item and all posts:* ${WEBSITE_URL}\n\n` +
-      `━━━━━━━━━━━━━━━━━━\n` +
-      getMenuMessage()
-    );
+    await sock.sendMessage(chatId, {
+      text: `✅ *Item posted successfully!* ${typeEmoji}\n\n` +
+        `*"${d.title}"* has been added to the feed.\n` +
+        `Our matching algorithm is now searching for potential matches.\n\n` +
+        `📲 You'll receive a WhatsApp notification if we find a match!\n\n` +
+        `🔗 *View your item and all posts:* ${WEBSITE_URL}\n\n` +
+        `━━━━━━━━━━━━━━━━━━\n` +
+        getMenuMessage()
+    });
   } catch (error) {
     console.error('Failed to create item via WhatsApp:', error);
-    await client.sendMessage(chatId,
-      `❌ Failed to post item. Please try again.\n\nType *menu* to start over.`
-    );
+    await sock.sendMessage(chatId, {
+      text: `❌ Failed to post item. Please try again.\n\nType *menu* to start over.`
+    });
   }
 }
 
-import { Pool } from 'pg';
-const { PostgresStore } = require('wwebjs-postgres');
+// ─── PostgreSQL Auth State (for Render deployment) ────────
+async function usePostgresAuthState(pool: Pool, sessionId: string) {
+  const tableName = 'baileys_auth';
 
-// ─── Initialize WhatsApp Client ───────────────────────────
+  // Create table if it doesn't exist
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS ${tableName} (
+      session_id TEXT NOT NULL,
+      data_key TEXT NOT NULL,
+      data_value TEXT NOT NULL,
+      PRIMARY KEY (session_id, data_key)
+    )
+  `);
+
+  const readData = async (key: string): Promise<any> => {
+    const result = await pool.query(
+      `SELECT data_value FROM ${tableName} WHERE session_id = $1 AND data_key = $2`,
+      [sessionId, key]
+    );
+    if (result.rows.length > 0) {
+      return JSON.parse(result.rows[0].data_value);
+    }
+    return null;
+  };
+
+  const writeData = async (key: string, data: any) => {
+    const value = JSON.stringify(data);
+    await pool.query(
+      `INSERT INTO ${tableName} (session_id, data_key, data_value)
+       VALUES ($1, $2, $3)
+       ON CONFLICT (session_id, data_key) DO UPDATE SET data_value = $3`,
+      [sessionId, key, value]
+    );
+  };
+
+  const removeData = async (key: string) => {
+    await pool.query(
+      `DELETE FROM ${tableName} WHERE session_id = $1 AND data_key = $2`,
+      [sessionId, key]
+    );
+  };
+
+  // Load creds
+  const creds = await readData('creds');
+
+  return {
+    state: {
+      creds: creds || (await import('@whiskeysockets/baileys')).initAuthCreds(),
+      keys: {
+        get: async (type: string, ids: string[]) => {
+          const result: Record<string, any> = {};
+          for (const id of ids) {
+            const data = await readData(`keys-${type}-${id}`);
+            if (data) {
+              result[id] = data;
+            }
+          }
+          return result;
+        },
+        set: async (data: Record<string, Record<string, any>>) => {
+          for (const [type, entries] of Object.entries(data)) {
+            for (const [id, value] of Object.entries(entries)) {
+              if (value) {
+                await writeData(`keys-${type}-${id}`, value);
+              } else {
+                await removeData(`keys-${type}-${id}`);
+              }
+            }
+          }
+        },
+      },
+    },
+    saveCreds: async () => {
+      await writeData('creds', creds);
+    },
+  };
+}
+
+// ─── Initialize WhatsApp Bot ──────────────────────────────
 export async function initWhatsAppBot() {
-  console.log('🤖 Initializing WhatsApp Bot...');
+  console.log('🤖 Initializing WhatsApp Bot (Baileys)...');
 
-  if (!process.env.DATABASE_URL) {
-    console.error('❌ DATABASE_URL is missing. Cannot initialize RemoteAuth.');
-    return;
+  let state: any;
+  let saveCreds: () => Promise<void>;
+
+  // Use PostgreSQL for auth state if DATABASE_URL is set (production/Render)
+  if (process.env.DATABASE_URL) {
+    console.log('⏳ Using PostgreSQL for session storage...');
+    const pool = new Pool({
+      connectionString: process.env.DATABASE_URL,
+      ssl: process.env.DATABASE_URL.includes('localhost') ? false : { rejectUnauthorized: false },
+    });
+    await pool.query('SELECT 1');
+    console.log('✅ Connected to PostgreSQL for session storage.');
+
+    const authState = await usePostgresAuthState(pool, 'kgpfind-bot');
+    state = authState.state;
+    saveCreds = authState.saveCreds;
+  } else {
+    // Use local file auth state for development
+    console.log('📁 Using local file auth state (dev mode)...');
+    const authState = await useMultiFileAuthState('./auth_info_baileys');
+    state = authState.state;
+    saveCreds = authState.saveCreds;
   }
 
-  const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: process.env.DATABASE_URL.includes('localhost') ? false : { rejectUnauthorized: false }
-  });
+  const startSocket = async () => {
+    const sock = makeWASocket({
+      auth: {
+        creds: state.creds,
+        keys: makeCacheableSignalKeyStore(state.keys, logger as any),
+      },
+      printQRInTerminal: true,
+      logger: logger as any,
+      browser: ['KGPFind', 'Chrome', '1.0.0'],
+    });
 
-  console.log('⏳ Connecting to PostgreSQL for WhatsApp session storage...');
-  
-  // Wait for Postgres connection to verify it works
-  await pool.query('SELECT 1');
-  const store = new PostgresStore({
-    pool: pool
-  });
+    // Save credentials whenever they update
+    sock.ev.on('creds.update', async () => {
+      state.creds = sock.authState.creds;
+      await saveCreds();
+    });
 
-  const client = new Client({
-    authStrategy: new RemoteAuth({
-      store: store,
-      backupSyncIntervalMs: 60000, // Save session every minute
-      dataPath: './'
-    }),
-    webVersionCache: {
-      type: 'remote',
-      remotePath: 'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2412.54.html',
-    },
-    puppeteer: {
-      headless: true,
-      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu'],
-    },
-  });
+    // Handle connection updates
+    sock.ev.on('connection.update', (update) => {
+      const { connection, lastDisconnect, qr } = update;
 
-  client.on('qr', (qr: string) => {
-    console.log('\n📱 Scan this QR code with your WhatsApp:');
-    qrcode.generate(qr, { small: true });
-    
-    // Fallback for cloud logs (Render, etc.) where ASCII art gets broken by timestamps
-    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(qr)}`;
-    console.log('\n⚠️ If the QR code above is broken/unscannable, click this link to view it:');
-    console.log(qrUrl);
-    console.log('\nWaiting for scan...\n');
-  });
-
-  client.on('authenticated', () => {
-    console.log('🔐 WhatsApp Bot authenticated successfully.');
-  });
-
-  client.on('remote_session_saved', () => {
-    console.log('💾 Remote session saved to PostgreSQL successfully!');
-  });
-
-  client.on('disconnected', (reason) => {
-    console.log('❌ WhatsApp Bot was disconnected. Reason:', reason);
-  });
-
-  client.on('ready', async () => {
-    console.log('✅ WhatsApp Bot is ready and connected!');
-    setWhatsAppClient(client);
-
-    try {
-      // Set Display Name
-      await client.setDisplayName('KGPFind');
-      
-      // Set Profile Picture
-      const logoPath = require('path').join(process.cwd(), '../client/public/logo.png');
-      const media = MessageMedia.fromFilePath(logoPath);
-      await client.setProfilePicture(media);
-      console.log('🖼️  Profile name and picture updated successfully.');
-    } catch (error) {
-      console.error('⚠️ Could not set profile info automatically:', error);
-    }
-  });
-
-  client.on('authenticated', () => {
-    console.log('🔐 WhatsApp Bot authenticated successfully.');
-  });
-
-  client.on('auth_failure', (msg: string) => {
-    console.error('❌ WhatsApp authentication failed:', msg);
-  });
-
-  client.on('disconnected', (reason: string) => {
-    console.log('📴 WhatsApp Bot disconnected:', reason);
-    setWhatsAppClient(null);
-  });
-
-  client.on('message', async (message: any) => {
-    try {
-      // Only handle personal messages, not group messages
-      if (message.from.endsWith('@g.us')) return;
-      // Ignore status updates
-      if (message.from === 'status@broadcast') return;
-
-      await handleMessage(client, message.from, message.body || '', message);
-    } catch (error) {
-      console.error('Error handling WhatsApp message:', error);
-      try {
-        await client.sendMessage(message.from,
-          `❌ Something went wrong. Please try again.\n\nType *menu* to go back to the main menu.`
-        );
-      } catch (e) {
-        console.error('Failed to send error message:', e);
+      if (qr) {
+        // Also provide a clickable URL for cloud environments where terminal QR may break
+        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(qr)}`;
+        console.log('\n⚠️ If the QR code above is broken/unscannable, click this link to view it:');
+        console.log(qrUrl);
+        console.log('\nWaiting for scan...\n');
       }
-    }
-  });
 
-  client.initialize();
+      if (connection === 'close') {
+        const statusCode = (lastDisconnect?.error as Boom)?.output?.statusCode;
+        const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
 
-  return client;
+        console.log(`📴 Connection closed. Status: ${statusCode}. Reconnecting: ${shouldReconnect}`);
+
+        if (shouldReconnect) {
+          // Reconnect after a short delay
+          setTimeout(() => startSocket(), 3000);
+        } else {
+          console.log('❌ Logged out. Please delete auth_info_baileys and restart to re-scan.');
+          setBaileysSocket(null);
+        }
+      }
+
+      if (connection === 'open') {
+        console.log('✅ WhatsApp Bot is ready and connected!');
+        setBaileysSocket(sock);
+      }
+    });
+
+    // Handle incoming messages
+    sock.ev.on('messages.upsert', async ({ messages, type }) => {
+      if (type !== 'notify') return; // Only handle new messages, not history
+
+      for (const msg of messages) {
+        try {
+          // Skip messages from self
+          if (msg.key.fromMe) continue;
+          // Skip group messages
+          if (msg.key.remoteJid?.endsWith('@g.us')) continue;
+          // Skip status broadcasts
+          if (msg.key.remoteJid === 'status@broadcast') continue;
+
+          const chatId = msg.key.remoteJid!;
+          const text = getTextFromMessage(msg.message);
+
+          await handleMessage(sock, chatId, text, msg);
+        } catch (error) {
+          console.error('Error handling WhatsApp message:', error);
+          try {
+            if (msg.key.remoteJid) {
+              await sock.sendMessage(msg.key.remoteJid, {
+                text: `❌ Something went wrong. Please try again.\n\nType *menu* to go back to the main menu.`
+              });
+            }
+          } catch (e) {
+            console.error('Failed to send error message:', e);
+          }
+        }
+      }
+    });
+
+    return sock;
+  };
+
+  return startSocket();
 }

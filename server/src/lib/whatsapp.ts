@@ -1207,9 +1207,14 @@ export async function initWhatsAppBot() {
           const chatId = msg.key.remoteJid!;
           const text = getTextFromMessage(msg.message);
 
+          console.log(`📩 Message from ${chatId}: "${text.substring(0, 50)}"`);
+          const session = getSession(chatId);
+          console.log(`📋 Session step: ${session.step}, userId: ${session.userId || 'none'}`);
+
           await handleMessage(sock, chatId, text, msg);
+          console.log(`✅ Message handled successfully`);
         } catch (error) {
-          console.error('Error handling WhatsApp message:', error);
+          console.error('❌ Error handling WhatsApp message:', error);
           try {
             if (msg.key.remoteJid) {
               await sock.sendMessage(msg.key.remoteJid, {

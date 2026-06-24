@@ -71,6 +71,7 @@ interface ConversationState {
     showPosterWhatsapp?: boolean;
   };
   lastActivity: number;
+  aiPromise?: Promise<void>;
 }
 
 const CATEGORIES = [
@@ -469,54 +470,50 @@ async function handleQuickImage(sock: WASocket, chatId: string, body: string, me
   
   if (messageType === 'imageMessage') {
     try {
-      await sock.sendMessage(chatId, { text: `⏳ Analyzing image with AI...` });
-      
+      // 1. Download buffer immediately
       const buffer = await downloadMediaMessage(
         message as any,
         'buffer',
         {},
         { logger: logger as any, reuploadRequest: sock.updateMediaMessage }
       );
-      
       const mimeType = message.message?.imageMessage?.mimetype || 'image/jpeg';
-      
-      // Send to Gemini Vision
-      const aiResponse = await analyzeItemImage(buffer as Buffer, mimeType);
-      
-      // Also upload to cloudinary so we have the URL
-      const imageUrl = await uploadBufferToCloudinary(buffer as Buffer);
-      session.itemData.imageUrl = imageUrl;
-      
-      if (aiResponse.result) {
-        const aiResult = aiResponse.result;
-        session.itemData.title = aiResult.title;
-        session.itemData.category = aiResult.category;
-        session.itemData.color = aiResult.color;
-        session.itemData.brand = aiResult.brand;
-        session.itemData.description = `Found item. Automatically categorized by AI based on image.`;
-        
-        await sock.sendMessage(chatId, {
-          text: `🤖 *AI Analysis Complete!*\n\n` +
-            `*Detected Item:* ${aiResult.title}\n` +
-            `*Category:* ${aiResult.category}\n` +
-            `*Color:* ${aiResult.color}\n` +
-            `*Brand:* ${aiResult.brand || 'None visible'}\n\n` +
-            `📍 *Where did you find it?*\n(e.g. Nalanda Classroom Complex, Tech Market)`
-        });
-      } else {
-        // Fallback if AI fails or no API key
-        session.itemData.title = 'Found Item';
-        session.itemData.description = 'Found item.';
-        await sock.sendMessage(chatId, {
-          text: `⚠️ *Image uploaded!* (AI Analysis skipped or failed)\n` +
-            `*Reason:* ${aiResponse.error}\n\n` +
-            `📍 *Where did you find it?*\n(e.g. Nalanda Classroom Complex, Tech Market)`
-        });
-      }
-      
+
+      // 2. Acknowledge image and ask for location instantly (Zero Friction)
+      session.step = ConversationStep.AWAITING_QUICK_LOCATION;
       // Default missing properties for FOUND
       session.itemData.urgency = 'NORMAL';
-      session.step = ConversationStep.AWAITING_QUICK_LOCATION;
+      
+      await sock.sendMessage(chatId, {
+        text: `📸 *Got it! Our AI is analyzing the image in the background.*\n\n` +
+          `📍 *Where did you find it?*\n(e.g. Nalanda Classroom Complex, Tech Market)`
+      });
+
+      // 3. Fire off the AI Vision task asynchronously
+      session.aiPromise = (async () => {
+        try {
+          const aiResponse = await analyzeItemImage(buffer as Buffer, mimeType);
+          const imageUrl = await uploadBufferToCloudinary(buffer as Buffer);
+          
+          session.itemData.imageUrl = imageUrl;
+          
+          if (aiResponse.result) {
+            session.itemData.title = aiResponse.result.title;
+            session.itemData.category = aiResponse.result.category;
+            session.itemData.color = aiResponse.result.color;
+            session.itemData.brand = aiResponse.result.brand;
+            session.itemData.description = `Found item. Automatically categorized by AI based on image.`;
+          } else {
+            // Fallback
+            session.itemData.title = 'Found Item';
+            session.itemData.description = `Found item. (AI skipped: ${aiResponse.error})`;
+          }
+        } catch (err) {
+          console.error('Async AI Vision Error:', err);
+          session.itemData.title = 'Found Item';
+          session.itemData.description = 'Found item.';
+        }
+      })();
       
     } catch (error) {
       console.error('AI Quick Flow Error:', error);
@@ -821,6 +818,18 @@ async function handlePrivacyWhatsapp(sock: WASocket, chatId: string, body: strin
   } else {
     await sock.sendMessage(chatId, { text: `Please reply *yes* or *no*.` });
     return;
+  }
+
+  // If there's a pending AI background task, wait for it to finish before showing the summary
+  if (session.aiPromise) {
+    await sock.sendMessage(chatId, { text: `⏳ Finalizing AI analysis...` });
+    try {
+      await session.aiPromise;
+    } catch (e) {
+      console.error('Failed to await aiPromise', e);
+    }
+    // Clear it so we don't await it again
+    session.aiPromise = undefined;
   }
 
   // Show summary and ask for confirmation

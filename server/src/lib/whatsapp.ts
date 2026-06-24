@@ -1,4 +1,4 @@
-import { Client, LocalAuth, MessageMedia } from 'whatsapp-web.js';
+import { Client, LocalAuth, RemoteAuth, MessageMedia } from 'whatsapp-web.js';
 import qrcode from 'qrcode-terminal';
 import prisma from './prisma';
 import { sendOTP } from './email';
@@ -791,13 +791,36 @@ async function handleConfirm(client: Client, chatId: string, body: string, sessi
   }
 }
 
+import { Pool } from 'pg';
+const { PostgresStore } = require('wwebjs-postgres');
+
 // ─── Initialize WhatsApp Client ───────────────────────────
 export async function initWhatsAppBot() {
   console.log('🤖 Initializing WhatsApp Bot...');
 
+  if (!process.env.DATABASE_URL) {
+    console.error('❌ DATABASE_URL is missing. Cannot initialize RemoteAuth.');
+    return;
+  }
+
+  const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: process.env.DATABASE_URL.includes('localhost') ? false : { rejectUnauthorized: false }
+  });
+
+  console.log('⏳ Connecting to PostgreSQL for WhatsApp session storage...');
+  
+  // Wait for Postgres connection to verify it works
+  await pool.query('SELECT 1');
+  const store = new PostgresStore({
+    pool: pool
+  });
+
   const client = new Client({
-    authStrategy: new LocalAuth({
-      dataPath: './whatsapp-session',
+    authStrategy: new RemoteAuth({
+      store: store,
+      backupSyncIntervalMs: 60000, // Save session every minute
+      dataPath: './'
     }),
     webVersionCache: {
       type: 'remote',

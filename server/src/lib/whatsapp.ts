@@ -860,11 +860,11 @@ async function usePostgresAuthState(pool: Pool, sessionId: string) {
   };
 
   // Load creds
-  const creds = await readData('creds');
+  const initialCreds = await readData('creds');
 
-  return {
+  const authState = {
     state: {
-      creds: creds || (await import('@whiskeysockets/baileys')).initAuthCreds(),
+      creds: initialCreds || (await import('@whiskeysockets/baileys')).initAuthCreds(),
       keys: {
         get: async (type: string, ids: string[]) => {
           const result: Record<string, any> = {};
@@ -890,9 +890,13 @@ async function usePostgresAuthState(pool: Pool, sessionId: string) {
       },
     },
     saveCreds: async () => {
-      await writeData('creds', creds);
+      // Always save the CURRENT creds from the live state object
+      await writeData('creds', authState.state.creds);
+      console.log('💾 Credentials saved to PostgreSQL.');
     },
   };
+
+  return authState;
 }
 
 // ─── Initialize WhatsApp Bot ──────────────────────────────
@@ -938,6 +942,7 @@ export async function initWhatsAppBot() {
     sock.ev.on('creds.update', async () => {
       state.creds = sock.authState.creds;
       await saveCreds();
+      console.log('🔑 Auth credentials updated and saved.');
     });
 
     // Handle connection updates

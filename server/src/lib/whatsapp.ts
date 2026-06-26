@@ -16,6 +16,7 @@ import { setBaileysSocket } from './notifier';
 import { v2 as cloudinary } from 'cloudinary';
 import { containsProfanity } from './moderation';
 import { analyzeItemImage } from './vision';
+import { extractItemFeatures } from './nlp';
 import { Pool } from 'pg';
 
 const WEBSITE_URL = process.env.WEBSITE_URL || 'https://kgp-lost-found.vercel.app';
@@ -32,14 +33,7 @@ enum ConversationStep {
   AWAITING_FOUND_MODE = 'AWAITING_FOUND_MODE',
   AWAITING_QUICK_IMAGE = 'AWAITING_QUICK_IMAGE',
   AWAITING_QUICK_LOCATION = 'AWAITING_QUICK_LOCATION',
-  AWAITING_TITLE = 'AWAITING_TITLE',
-  AWAITING_CATEGORY = 'AWAITING_CATEGORY',
-  AWAITING_COLOR = 'AWAITING_COLOR',
-  AWAITING_BRAND = 'AWAITING_BRAND',
-  AWAITING_DATE = 'AWAITING_DATE',
-  AWAITING_DESCRIPTION = 'AWAITING_DESCRIPTION',
-  AWAITING_LOCATION = 'AWAITING_LOCATION',
-  AWAITING_IDENTIFYING_MARKS = 'AWAITING_IDENTIFYING_MARKS',
+  AWAITING_NATURAL_LANGUAGE_DESC = 'AWAITING_NATURAL_LANGUAGE_DESC',
   AWAITING_URGENCY = 'AWAITING_URGENCY',
   AWAITING_REWARD = 'AWAITING_REWARD',
   AWAITING_IMAGE = 'AWAITING_IMAGE',
@@ -230,29 +224,8 @@ async function handleMessage(sock: WASocket, chatId: string, messageBody: string
     case ConversationStep.AWAITING_QUICK_LOCATION:
       await handleQuickLocation(sock, chatId, body, session);
       break;
-    case ConversationStep.AWAITING_TITLE:
-      await handleTitle(sock, chatId, body, session);
-      break;
-    case ConversationStep.AWAITING_CATEGORY:
-      await handleCategory(sock, chatId, body, session);
-      break;
-    case ConversationStep.AWAITING_COLOR:
-      await handleColor(sock, chatId, body, session);
-      break;
-    case ConversationStep.AWAITING_BRAND:
-      await handleBrand(sock, chatId, body, session);
-      break;
-    case ConversationStep.AWAITING_DATE:
-      await handleDate(sock, chatId, body, session);
-      break;
-    case ConversationStep.AWAITING_DESCRIPTION:
-      await handleDescription(sock, chatId, body, session);
-      break;
-    case ConversationStep.AWAITING_LOCATION:
-      await handleLocation(sock, chatId, body, session);
-      break;
-    case ConversationStep.AWAITING_IDENTIFYING_MARKS:
-      await handleIdentifyingMarks(sock, chatId, body, session);
+    case ConversationStep.AWAITING_NATURAL_LANGUAGE_DESC:
+      await handleNaturalLanguageDesc(sock, chatId, body, session);
       break;
     case ConversationStep.AWAITING_URGENCY:
       await handleUrgency(sock, chatId, bodyLower, session);
@@ -418,11 +391,11 @@ async function handleMenu(sock: WASocket, chatId: string, body: string, session:
   switch (body) {
     case '1':
       session.itemData = { type: 'LOST' };
-      session.step = ConversationStep.AWAITING_TITLE;
+      session.step = ConversationStep.AWAITING_NATURAL_LANGUAGE_DESC;
       await sock.sendMessage(chatId, {
         text: `📝 *Reporting a LOST item*\n\n` +
-          `What is the item?\n` +
-          `(e.g. Milton Water Bottle, ID Card, JBL Earbuds)`
+          `Please describe the item in detail in a single message.\n` +
+          `(Include what it is, color, brand, date, location, and any identifying marks)`
       });
       break;
     case '2':
@@ -432,7 +405,7 @@ async function handleMenu(sock: WASocket, chatId: string, body: string, session:
         text: `📝 *Reporting a FOUND item*\n\n` +
           `Choose your reporting mode:\n\n` +
           `*1.* ⚡ Quick Mode (Just send a photo & location. AI fills the rest)\n` +
-          `*2.* 📝 Detailed Mode (Manual questions)\n\n` +
+          `*2.* 📝 Text Description Mode (Write what you found)\n\n` +
           `Reply with *1* or *2*.`
       });
       break;
@@ -523,9 +496,10 @@ async function handleType(sock: WASocket, chatId: string, body: string, session:
     await sock.sendMessage(chatId, { text: `Please reply with *1* for LOST or *2* for FOUND.` });
     return;
   }
-  session.step = ConversationStep.AWAITING_TITLE;
+  session.step = ConversationStep.AWAITING_NATURAL_LANGUAGE_DESC;
   await sock.sendMessage(chatId, {
-    text: `What is the item?\n(e.g. Milton Water Bottle, ID Card, JBL Earbuds)`
+    text: `📝 Please describe the item in detail in a single message.\n` +
+      `(Include what it is, color, brand, date, location, and any identifying marks)`
   });
 }
 
@@ -535,13 +509,14 @@ async function handleFoundMode(sock: WASocket, chatId: string, body: string, ses
     await sock.sendMessage(chatId, {
       text: `📸 *Send a photo of the item you found.*\n\nOur AI will automatically scan it to determine what it is!`
     });
-  } else if (body === '2' || body === 'detailed') {
-    session.step = ConversationStep.AWAITING_TITLE;
+  } else if (body === '2' || body === 'detailed' || body === 'text') {
+    session.step = ConversationStep.AWAITING_NATURAL_LANGUAGE_DESC;
     await sock.sendMessage(chatId, {
-      text: `What is the item?\n(e.g. Milton Water Bottle, ID Card, JBL Earbuds)`
+      text: `📝 Please describe the item in detail in a single message.\n` +
+        `(Include what it is, color, brand, date, location, and any identifying marks)`
     });
   } else {
-    await sock.sendMessage(chatId, { text: `Please reply with *1* for Quick Mode or *2* for Detailed Mode.` });
+    await sock.sendMessage(chatId, { text: `Please reply with *1* for Quick Mode or *2* for Text Description Mode.` });
   }
 }
 
@@ -623,159 +598,51 @@ async function handleQuickLocation(sock: WASocket, chatId: string, body: string,
   });
 }
 
-async function handleTitle(sock: WASocket, chatId: string, body: string, session: ConversationState) {
+async function handleNaturalLanguageDesc(sock: WASocket, chatId: string, body: string, session: ConversationState) {
   if (body.length < 2) {
-    await sock.sendMessage(chatId, { text: `Please provide a more descriptive title (at least 2 characters).` });
-    return;
-  }
-  if (containsProfanity([body])) {
-    await sock.sendMessage(chatId, { text: `❌ Title contains inappropriate language. Please try again.` });
-    return;
-  }
-  session.itemData.title = body;
-  session.step = ConversationStep.AWAITING_CATEGORY;
-
-  const categoryList = CATEGORIES.map((c, i) => `*${i + 1}.* ${c}`).join('\n');
-  await sock.sendMessage(chatId, {
-    text: `📂 *Select a category:*\n\n${categoryList}\n\nReply with the *number* or type *skip*.`
-  });
-}
-
-async function handleCategory(sock: WASocket, chatId: string, body: string, session: ConversationState) {
-  if (body.toLowerCase() === 'skip') {
-    session.itemData.category = undefined;
-  } else {
-    const num = parseInt(body);
-    if (num >= 1 && num <= CATEGORIES.length) {
-      session.itemData.category = CATEGORIES[num - 1];
-    } else {
-      // Check if they typed the category name directly
-      const match = CATEGORIES.find(c => c.toLowerCase() === body.toLowerCase());
-      if (match) {
-        session.itemData.category = match;
-      } else {
-        await sock.sendMessage(chatId, {
-          text: `Please reply with a number (1-${CATEGORIES.length}) or type *skip*.`
-        });
-        return;
-      }
-    }
-  }
-
-  session.step = ConversationStep.AWAITING_COLOR;
-  const colorList = COLORS.map((c, i) => `*${i + 1}.* ${c}`).join('\n');
-  await sock.sendMessage(chatId, {
-    text: `🎨 *Select a color:*\n\n${colorList}\n\nReply with the *number* or type *skip*.`
-  });
-}
-
-async function handleColor(sock: WASocket, chatId: string, body: string, session: ConversationState) {
-  if (body.toLowerCase() === 'skip') {
-    session.itemData.color = undefined;
-  } else {
-    const num = parseInt(body);
-    if (num >= 1 && num <= COLORS.length) {
-      session.itemData.color = COLORS[num - 1];
-    } else {
-      const match = COLORS.find(c => c.toLowerCase() === body.toLowerCase());
-      if (match) {
-        session.itemData.color = match;
-      } else {
-        await sock.sendMessage(chatId, {
-          text: `Please reply with a number (1-${COLORS.length}) or type *skip*.`
-        });
-        return;
-      }
-    }
-  }
-
-  session.step = ConversationStep.AWAITING_BRAND;
-  await sock.sendMessage(chatId, {
-    text: `🏷️ *Brand?*\n(e.g. JBL, Samsung, Milton, Apple)\n\nType the brand name or *skip*.`
-  });
-}
-
-async function handleBrand(sock: WASocket, chatId: string, body: string, session: ConversationState) {
-  if (body.toLowerCase() !== 'skip') {
-    session.itemData.brand = body;
-  }
-
-  session.step = ConversationStep.AWAITING_DATE;
-  const typeWord = session.itemData.type === 'LOST' ? 'lose' : 'find';
-  await sock.sendMessage(chatId, {
-    text: `📅 *When did you ${typeWord} it?*\n\n` +
-      `Reply in format: *DD/MM/YYYY*\n` +
-      `(e.g. 23/06/2026)\n\nOr type *skip*.`
-  });
-}
-
-async function handleDate(sock: WASocket, chatId: string, body: string, session: ConversationState) {
-  if (body.toLowerCase() !== 'skip') {
-    // Parse DD/MM/YYYY
-    const dateRegex = /^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/;
-    const match = body.match(dateRegex);
-    if (match) {
-      const day = parseInt(match[1]);
-      const month = parseInt(match[2]);
-      const year = parseInt(match[3]);
-      const date = new Date(year, month - 1, day);
-      
-      if (date > new Date()) {
-        await sock.sendMessage(chatId, { text: `❌ Date cannot be in the future. Please try again or type *skip*.` });
-        return;
-      }
-      
-      session.itemData.dateOccurred = date.toISOString();
-    } else {
-      await sock.sendMessage(chatId, {
-        text: `❌ Invalid date format. Please use *DD/MM/YYYY* (e.g. 23/06/2026) or type *skip*.`
-      });
-      return;
-    }
-  }
-
-  session.step = ConversationStep.AWAITING_DESCRIPTION;
-  await sock.sendMessage(chatId, {
-    text: `📝 *Describe the item in detail:*\n\n` +
-      `Include scratches, stickers, unique features, any details that help identify it.`
-  });
-}
-
-async function handleDescription(sock: WASocket, chatId: string, body: string, session: ConversationState) {
-  if (body.length < 5) {
-    await sock.sendMessage(chatId, { text: `Please provide a more detailed description (at least 5 characters).` });
+    await sock.sendMessage(chatId, { text: `Please provide more details.` });
     return;
   }
   if (containsProfanity([body])) {
     await sock.sendMessage(chatId, { text: `❌ Description contains inappropriate language. Please try again.` });
     return;
   }
-  session.itemData.description = body;
-  session.step = ConversationStep.AWAITING_LOCATION;
 
-  const typeWord = session.itemData.type === 'LOST' ? 'lost' : 'found';
-  await sock.sendMessage(chatId, {
-    text: `📍 *Where was it ${typeWord}?*\n\n` +
-      `(e.g. Nalanda Classroom Complex, LBS Hall, Tech Market, Main Building)`
-  });
-}
+  await sock.sendMessage(chatId, { text: `⏳ *Analyzing your description...*` });
 
-async function handleLocation(sock: WASocket, chatId: string, body: string, session: ConversationState) {
-  if (body.length < 2) {
-    await sock.sendMessage(chatId, { text: `Please provide a location (at least 2 characters).` });
-    return;
-  }
-  session.itemData.location = body;
-  session.step = ConversationStep.AWAITING_IDENTIFYING_MARKS;
-  await sock.sendMessage(chatId, {
-    text: `🔍 *Any identifying marks?*\n\n` +
-      `(e.g. scratch on base, red tape, name written on it)\n\nOr type *skip*.`
-  });
-}
+  // Accumulate context in case this is a follow-up answer
+  const combinedText = session.itemData.description
+    ? `${session.itemData.description}\nUser added: ${body}`
+    : body;
 
-async function handleIdentifyingMarks(sock: WASocket, chatId: string, body: string, session: ConversationState) {
-  if (body.toLowerCase() !== 'skip') {
-    session.itemData.identifyingMarks = body;
+  try {
+    const aiResponse = await extractItemFeatures(combinedText);
+    if (aiResponse.result) {
+      session.itemData.title = aiResponse.result.title;
+      session.itemData.category = aiResponse.result.category;
+      session.itemData.color = aiResponse.result.color;
+      session.itemData.brand = aiResponse.result.brand;
+      session.itemData.dateOccurred = aiResponse.result.dateOccurred;
+      session.itemData.description = combinedText; // Keep full context in case we need another follow-up
+      session.itemData.location = aiResponse.result.location;
+      session.itemData.identifyingMarks = aiResponse.result.identifyingMarks;
+
+      if (!aiResponse.result.isComplete && aiResponse.result.followUpQuestion) {
+        // Send follow-up question, stay in current state
+        await sock.sendMessage(chatId, { text: aiResponse.result.followUpQuestion });
+        return;
+      }
+      
+      // Once complete, update description to the clean concise summary
+      session.itemData.description = aiResponse.result.description;
+    } else {
+      session.itemData.title = 'Item';
+      session.itemData.description = combinedText;
+    }
+  } catch (error) {
+    console.error('NLP Error:', error);
+    session.itemData.title = 'Item';
+    session.itemData.description = combinedText;
   }
 
   // If LOST, ask urgency; otherwise skip to image
